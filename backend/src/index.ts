@@ -42,3 +42,4 @@ app.get("/", (_req: Request, res: Response) => {
   res.send("Project Management System Backend is running");
 });
 app.use("/auth", authRoutes);
+app.use("/chats", chatRoutes);
