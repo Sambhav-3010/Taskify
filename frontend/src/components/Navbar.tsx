@@ -17,7 +17,7 @@ const Nabar = () => {
           </Link>
 
           <div className="flex items-center space-x-2">
-            <div className="inline cursor-text">{user?.displayName}</div>
+            <div className="inline cursor-text">{user?.name}</div>
             <Link href="/profile">
               <Button variant="outline" size="sm">
                 <User2Icon />

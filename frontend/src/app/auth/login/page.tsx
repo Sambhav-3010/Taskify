@@ -5,7 +5,6 @@ import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,29 +19,40 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LogIn, Mail, Lock } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth, provider } from "../../../lib/firebase.client";
-import Cookies from "js-cookie";
+import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const router = useRouter();
-
+  const { setUser } = useAuth()
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
+    console.log(
+      "Submitting login for:",
+      process.env.NEXT_PUBLIC_BACKEND_URL + "/auth/login"
+    );
     try {
-      await login(email, password);
+      const response = await axios.post(
+        process.env.NEXT_PUBLIC_BACKEND_URL + "/auth/login",
+        { email, password },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      setUser(response.data.user);
       router.push("/dashboard");
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setError(error.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
       } else {
         setError("Failed to log in");
       }
@@ -51,27 +61,7 @@ export default function LoginPage() {
     }
   };
 
-  function handleGoogleLogin() {
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        const user = result.user;
-
-        console.log("Logged in user:", user);
-        console.log("Display Name:", user.displayName);
-        console.log("Email:", user.email);
-
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const token = credential?.accessToken;
-
-        if (token) {
-          Cookies.set("token", token, { expires: 7 });
-        }
-        router.push("/dashboard");
-      })
-      .catch((error) => {
-        console.error("Login error:", error);
-      });
-  }
+  const handleGoogleLogin = async () => {}
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -90,7 +80,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -129,7 +119,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full">
               {loading ? "Signing in..." : "Sign in"}
             </Button>
           </form>

@@ -8,7 +8,7 @@ const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,
-  maxAge: 1000 * 60 * 60,
+  maxAge: 1000 * 60 * 60 * 24 * 7,
 };
 
 export async function signup(req: Request, res: Response) {
@@ -78,21 +78,21 @@ export async function me(req: Request, res: Response) {
 }
 
 export async function googleAuth(req: Request, res: Response) {
-  if (!req.user) {
-    return res.redirect(process.env.FRONTEND_URL + "/login?error=auth_failed");
+  try {
+    const { accessToken, refreshToken } = req.user as any;
+
+    res
+      .cookie("access_token", accessToken, {
+        ...COOKIE_OPTIONS,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+      })
+      .cookie("refresh_token", refreshToken, {
+       ...COOKIE_OPTIONS,
+        maxAge: 1000 * 60 * 60 * 24 * 30,
+      })
+      .redirect(process.env.FRONTEND_URL || "http://localhost:3000");
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Google authentication failed" });
   }
-
-  const token = signJwt({
-    id: req.user.id.toString(),
-    email: req.user.email,
-    name: req.user.name,
-  });
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-  });
-
-  return res.redirect(process.env.FRONTEND_URL + "/dashboard");
 }

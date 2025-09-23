@@ -6,10 +6,13 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import mongoose from "mongoose";
 import passport from "./utils/passport";
+import session from "express-session";
 
 dotenv.config();
+
 const PORT = process.env.PORT || 5000;
-const app = express();
+const app: Application = express();
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(
@@ -22,7 +25,28 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false,
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24,
+    },
+  })
+);
+
 app.use(passport.initialize());
+app.use(passport.session());
+
+app.get("/", (_req: Request, res: Response) => {
+  res.send("Project Management System Backend is running");
+});
+app.use("/auth", authRoutes);
+app.use("/chats", chatRoutes);
 
 async function start() {
   try {
@@ -38,10 +62,3 @@ async function start() {
   }
 }
 start();
-
-// routes
-app.get("/", (_req: Request, res: Response) => {
-  res.send("Project Management System Backend is running");
-});
-app.use("/auth", authRoutes);
-app.use("/chats", chatRoutes);

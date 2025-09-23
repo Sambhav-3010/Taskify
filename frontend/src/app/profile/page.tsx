@@ -31,7 +31,7 @@ function ProfileContent() {
 
             <div className="space-y-2">
               <Label htmlFor="displayName">Display Name</Label>
-              <Input readOnly disabled id="displayName" value={user?.displayName || ""} placeholder="Enter your display name" />
+              <Input readOnly disabled id="displayName" value={user?.name || ""} placeholder="Enter your display name" />
             </div>
           </CardContent>
         </Card>

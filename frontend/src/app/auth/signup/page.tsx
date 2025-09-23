@@ -20,67 +20,54 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserPlus, Mail, Lock, User } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-import { signInWithPopup } from "firebase/auth";
-import { auth, provider } from "../../../lib/firebase.client";
-import Cookies from "js-cookie";
-import { GoogleAuthProvider } from "firebase/auth";
+import axios from "axios";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [name, setName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signup } = useAuth();
+  const { setUser } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-
     setLoading(true);
-
+    console.log(
+      "Submitting login for:",
+      process.env.NEXT_PUBLIC_BACKEND_URL + "/auth/login"
+    );
     try {
-      await signup(email, password, displayName);
+      const response = await axios.post(
+        process.env.NEXT_PUBLIC_BACKEND_URL + "/auth/signup",
+        { email, password, name },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+
+      console.log("Login response:", response.data);
+      setUser(response.data.user);
       router.push("/dashboard");
-    } catch (error: unknown) {
-      setError((error as Error).message || "Failed to create account");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to log in");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   function handleGoogleLogin() {
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        const user = result.user;
-
-        console.log("Logged in user:", user);
-        console.log("Display Name:", user.displayName);
-        console.log("Email:", user.email);
-
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const token = credential?.accessToken;
-
-        if (token) {
-          Cookies.set("token", token, { expires: 7 });
-        }
-        router.push("/dashboard");
-      })
-      .catch((error) => {
-        console.error("Login error:", error);
-      });
+    
   }
 
   return (
@@ -108,15 +95,15 @@ export default function SignupPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="displayName">Full Name</Label>
+              <Label htmlFor="name">Full Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="displayName"
+                  id="name"
                   type="text"
                   placeholder="Enter your full name"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="pl-10"
                   required
                 />

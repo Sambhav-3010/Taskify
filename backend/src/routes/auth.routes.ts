@@ -9,15 +9,18 @@ router.post("/signup", signup);
 router.post("/login", login);
 router.post("/logout", logout);
 router.get("/me", requireAuth, me);
+
+
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", { scope: ["profile", "email"], accessType: "offline" })
 );
 
 router.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: process.env.FRONTEND_URL as string }),
+  passport.authenticate("google", { failureRedirect: "/login", session: false }),
   googleAuth
 );
+
 
 export default router;
