@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import User from "../models/User";
-import { signJwt } from "../utils/jwt";
+import { signJwt, verifyJwt } from "../utils/jwt";
 
 const COOKIE_NAME = process.env.COOKIE_NAME || "token";
 const COOKIE_OPTIONS = {
@@ -27,12 +27,10 @@ export async function signup(req: Request, res: Response) {
   const token = signJwt({ id: user._id.toString(), email: user.email });
 
   res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
-  return res
-    .status(201)
-    .json({
-      message: "User created",
-      user: { id: user._id, email: user.email, name: user.name },
-    });
+  return res.status(201).json({
+    message: "User created",
+    user: { id: user._id, email: user.email, name: user.name },
+  });
 }
 
 export async function login(req: Request, res: Response) {
@@ -70,27 +68,26 @@ export async function logout(req: Request, res: Response) {
 }
 
 export async function me(req: Request, res: Response) {
-  if (!req.user?.id)
-    return res.status(401).json({ message: "Not authenticated" });
-  const user = await User.findById(req.user.id).select("-password");
+  const { token } = req.cookies;
+  if (!token) {
+    return res.status(201).json({ message: "No token present" });
+  }
+  const decoded = verifyJwt<{ id: string }>(token);
+  const user = await User.findById(decoded.id).select("-password");
   if (!user) return res.status(404).json({ message: "User not found" });
   return res.json({ user });
 }
 
 export async function googleAuth(req: Request, res: Response) {
   try {
-    const { accessToken, refreshToken } = req.user as any;
-
-    res
-      .cookie("access_token", accessToken, {
-        ...COOKIE_OPTIONS,
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-      })
-      .cookie("refresh_token", refreshToken, {
-       ...COOKIE_OPTIONS,
-        maxAge: 1000 * 60 * 60 * 24 * 30,
-      })
-      .redirect(process.env.FRONTEND_URL || "http://localhost:3000");
+    const { _id, email, name } = req.user as any;
+    const token = signJwt({
+      id: _id.toString(),
+      email,
+      name,
+    });
+    res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+    res.redirect(process.env.FRONTEND_URL || "http://localhost:3000");
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Google authentication failed" });

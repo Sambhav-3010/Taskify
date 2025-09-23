@@ -77,7 +77,7 @@ function ProfileContent() {
 
 export default function ProfilePage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute route="/auth/login">
       <ProfileContent />
     </ProtectedRoute>
   )

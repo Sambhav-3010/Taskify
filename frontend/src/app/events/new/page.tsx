@@ -193,7 +193,7 @@ function NewEventContent() {
 
 export default function NewEventPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute route="/">
       <NewEventContent />
     </ProtectedRoute>
   );

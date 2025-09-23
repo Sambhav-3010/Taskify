@@ -7,18 +7,19 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 interface ProtectedRouteProps {
+  route: string;
   children: React.ReactNode
 }
 
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, route }: ProtectedRouteProps) => {
   const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/")
+      router.push(route)
     }
-  }, [user, loading, router])
+  }, [user, loading, router, route])
 
   if (loading) {
     return (

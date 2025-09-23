@@ -5,7 +5,6 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,11 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { initialEvents } from "@/lib/sampleData";
-import { ArrowLeft, LogOut } from "lucide-react"
-import Link from "next/link"
 
 function NewTaskContent() {
-  const { logout } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -123,7 +119,7 @@ function NewTaskContent() {
 
 export default function NewTaskPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute route="/">
       <NewTaskContent />
     </ProtectedRoute>
   )

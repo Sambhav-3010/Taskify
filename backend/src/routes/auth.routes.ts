@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { signup, login, logout, me, googleAuth } from "../controllers/auth";
-import { requireAuth } from "../middleware/auth";
 import passport from "passport";
 
 const router = Router();
@@ -8,7 +7,7 @@ const router = Router();
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/logout", logout);
-router.get("/me", requireAuth, me);
+router.get("/me", me);
 
 
 router.get(
@@ -21,6 +20,5 @@ router.get(
   passport.authenticate("google", { failureRedirect: "/login", session: false }),
   googleAuth
 );
-
 
 export default router;

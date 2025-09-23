@@ -66,9 +66,14 @@ export default function SignupPage() {
     }
   };
 
-  function handleGoogleLogin() {
-    
-  }
+  const handleGoogleLogin = async () => {
+    try {
+      window.location.href =
+        process.env.NEXT_PUBLIC_BACKEND_URL + "/auth/google";
+    } catch {
+      setError("Failed to initiate Google login");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

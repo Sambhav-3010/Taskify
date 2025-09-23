@@ -28,10 +28,7 @@ passport.use(
 
         const userWithTokens = {
           ...user.toObject(),
-          accessToken,
-          refreshToken,
         };
-
         return done(null, userWithTokens);
       } catch (err) {
         return done(err as Error, undefined);

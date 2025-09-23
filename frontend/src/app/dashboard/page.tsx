@@ -178,7 +178,7 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute route="/auth/login">
       <DashboardContent />
     </ProtectedRoute>
   )

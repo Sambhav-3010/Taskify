@@ -1,36 +1,40 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
-import axios from "axios"
+import type React from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
 
-// Define your backend user type
 export interface BackendUser {
-  id: string
-  name: string
-  email: string
+  id: string;
+  name: string;
+  email: string;
 }
 
 interface AuthContextType {
-  user: BackendUser | null
-  loading: boolean
-  setUser: (user: BackendUser | null) => void
-  login?: (email: string, password: string) => Promise<void>
-  signup?: (email: string, password: string, displayName: string) => Promise<void>
-  logout?: () => Promise<void>
+  user: BackendUser | null;
+  loading: boolean;
+  setUser: (user: BackendUser | null) => void;
+  login?: (email: string, password: string) => Promise<void>;
+  signup?: (
+    email: string,
+    password: string,
+    displayName: string
+  ) => Promise<void>;
+  logout?: () => Promise<void>;
+  loginWithGoogle?: (googleToken: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType)
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) throw new Error("useAuth must be used within an AuthProvider")
-  return context
-}
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
+  return context;
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<BackendUser | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<BackendUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -38,26 +42,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const response = await axios.get(
           process.env.NEXT_PUBLIC_BACKEND_URL + "/auth/me",
           { withCredentials: true }
-        )
+        );
         if (response.data?.user) {
-          setUser(response.data.user)
+          setUser(response.data.user);
+        } else {
+          setUser(null);
         }
-      } catch (err) {
-        console.error("Failed to fetch current user:", err)
-        setUser(null)
+      } catch {
+        setUser(null);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchCurrentUser()
-  }, [])
+    fetchCurrentUser();
+  }, []);
 
   const value: AuthContextType = {
     user,
     loading,
     setUser,
-  }
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

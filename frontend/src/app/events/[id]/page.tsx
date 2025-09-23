@@ -194,7 +194,7 @@ function EventDetailContent() {
 
 export default function EventDetailPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute route="/">
       <EventDetailContent />
     </ProtectedRoute>
   )
