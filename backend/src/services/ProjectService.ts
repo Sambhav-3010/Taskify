@@ -1,6 +1,7 @@
 
 import { ProjectRepository } from '../repositories/ProjectRepository';
 import { IProject } from '../models/Project';
+import { Types } from 'mongoose';
 
 export class ProjectService {
   private projectRepository: ProjectRepository;
@@ -9,15 +10,15 @@ export class ProjectService {
     this.projectRepository = new ProjectRepository();
   }
 
-  async createProject(projectData: IProject): Promise<IProject> {
-    return await this.projectRepository.create(projectData);
+  async createProject(projectData: IProject, userId: Types.ObjectId): Promise<IProject> {
+    return await this.projectRepository.create(projectData, userId);
   }
 
-  async listProjects(): Promise<IProject[]> {
-    return await this.projectRepository.findAll();
+  async listProjects(userId: Types.ObjectId): Promise<IProject[]> {
+    return await this.projectRepository.findAll(userId);
   }
 
-  async deleteProject(id: string): Promise<IProject | null> {
-    return await this.projectRepository.delete(id);
+  async deleteProject(id: string, userId: Types.ObjectId): Promise<IProject | null> {
+    return await this.projectRepository.delete(id, userId);
   }
 }

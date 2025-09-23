@@ -41,6 +41,12 @@ const Navbar = () => {
             <h1 className="text-2xl font-bold text-foreground">EventFlow</h1>
           </Link>
 
+          <nav className="hidden md:flex items-center space-x-4">
+            <Link href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
+              Dashboard
+            </Link>
+          </nav>
+
           <div className="flex items-center space-x-2">
             <div className="inline cursor-text">{user?.name}</div>
             <Link href="/profile">

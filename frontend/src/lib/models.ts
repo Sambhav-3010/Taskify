@@ -1,7 +1,17 @@
+export interface Project {
+  _id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+}
+
 export interface Task {
-  id: string
-  title: string
-  status: "Pending" | "In Progress" | "Completed"
+  _id: string;
+  title: string;
+  status: "todo" | "in-progress" | "done";
+  priority: "low" | "medium" | "high";
+  deadline: string;
+  projectId: string; // This will be the Project ID
 }
 
 export interface Event {

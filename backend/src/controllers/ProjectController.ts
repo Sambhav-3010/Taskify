@@ -11,7 +11,11 @@ export class ProjectController {
 
   async createProject(req: Request, res: Response): Promise<void> {
     try {
-      const project = await this.projectService.createProject(req.body);
+      if (!req.user || !req.user._id) {
+        res.status(401).json({ message: 'User not authenticated' });
+        return;
+      }
+      const project = await this.projectService.createProject(req.body, req.user._id);
       res.status(201).json(project);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -20,7 +24,11 @@ export class ProjectController {
 
   async listProjects(req: Request, res: Response): Promise<void> {
     try {
-      const projects = await this.projectService.listProjects();
+      if (!req.user || !req.user._id) {
+        res.status(401).json({ message: 'User not authenticated' });
+        return;
+      }
+      const projects = await this.projectService.listProjects(req.user._id);
       res.status(200).json(projects);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -29,8 +37,12 @@ export class ProjectController {
 
   async deleteProject(req: Request, res: Response): Promise<void> {
     try {
+      if (!req.user || !req.user._id) {
+        res.status(401).json({ message: 'User not authenticated' });
+        return;
+      }
       const { id } = req.params;
-      const project = await this.projectService.deleteProject(id);
+      const project = await this.projectService.deleteProject(id, req.user._id);
       if (!project) {
         res.status(404).json({ message: 'Project not found' });
         return;

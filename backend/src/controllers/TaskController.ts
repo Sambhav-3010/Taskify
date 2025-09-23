@@ -13,7 +13,11 @@ export class TaskController {
 
   async createTask(req: Request, res: Response): Promise<void> {
     try {
-      const task = await this.taskService.createTask(req.body);
+      if (!req.user || !req.user._id) {
+        res.status(401).json({ message: 'User not authenticated' });
+        return;
+      }
+      const task = await this.taskService.createTask(req.body, req.user._id);
       res.status(201).json(task);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -22,6 +26,10 @@ export class TaskController {
 
   async getTasks(req: Request, res: Response): Promise<void> {
     try {
+      if (!req.user || !req.user._id) {
+        res.status(401).json({ message: 'User not authenticated' });
+        return;
+      }
       const { projectId, status, priority, deadlineStart, deadlineEnd, page = 1, limit = 10 } = req.query;
       const filters: FilterQuery<ITask> = {};
 
@@ -44,7 +52,7 @@ export class TaskController {
         }
       }
 
-      const { tasks, totalPages, currentPage } = await this.taskService.getTasks(filters, Number(page), Number(limit));
+      const { tasks, totalPages, currentPage } = await this.taskService.getTasks(filters, Number(page), Number(limit), req.user._id);
       res.status(200).json({ tasks, totalPages, currentPage });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -53,8 +61,12 @@ export class TaskController {
 
   async updateTask(req: Request, res: Response): Promise<void> {
     try {
+      if (!req.user || !req.user._id) {
+        res.status(401).json({ message: 'User not authenticated' });
+        return;
+      }
       const { id } = req.params;
-      const task = await this.taskService.updateTask(id, req.body);
+      const task = await this.taskService.updateTask(id, req.body, req.user._id);
       if (!task) {
         res.status(404).json({ message: 'Task not found' });
         return;
@@ -67,8 +79,12 @@ export class TaskController {
 
   async deleteTask(req: Request, res: Response): Promise<void> {
     try {
+      if (!req.user || !req.user._id) {
+        res.status(401).json({ message: 'User not authenticated' });
+        return;
+      }
       const { id } = req.params;
-      const task = await this.taskService.deleteTask(id);
+      const task = await this.taskService.deleteTask(id, req.user._id);
       if (!task) {
         res.status(404).json({ message: 'Task not found' });
         return;

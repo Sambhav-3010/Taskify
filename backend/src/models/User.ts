@@ -1,4 +1,6 @@
 import mongoose, { Document, Model, Schema , Types} from "mongoose";
+import { IProject } from "./Project";
+import { ITask } from "./Task";
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
@@ -6,13 +8,17 @@ export interface IUser extends Document {
   password: string;
   name?: string;
   createdAt: Date;
+  projects: Types.ObjectId[] | IProject[]; // References to Project documents
+  tasks: Types.ObjectId[] | ITask[];     // References to Task documents
 }
 
 const UserSchema = new Schema<IUser>(
   {
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    name: { type: String }
+    name: { type: String },
+    projects: [{ type: Schema.Types.ObjectId, ref: 'Project' }],
+    tasks: [{ type: Schema.Types.ObjectId, ref: 'Task' }],
   },
   { timestamps: true }
 );

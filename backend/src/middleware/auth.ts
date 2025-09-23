@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyJwt } from "../utils/jwt";
+import { Types } from "mongoose";
+import User, { IUser } from "../models/User";
 
 declare global {
   namespace Express {
-    interface Request {
-      user?: User;
-    }
+    interface User extends IUser {}
   }
 }
 
@@ -19,8 +19,22 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     if (!token) return res.status(401).json({ message: "Not authenticated" });
 
     const payload = verifyJwt<{ id: string; email?: string; name?: string }>(token);
-    req.user = { id: payload.id, email: payload.email, name: payload.name };
-    next();
+    if (!payload.id) {
+        return res.status(401).json({ message: "Invalid token payload" });
+    }
+
+    // Fetch the full user from the database to ensure req.user is of type IUser
+    User.findById(payload.id).then(user => {
+        if (!user) {
+            return res.status(401).json({ message: "User not found" });
+        }
+        req.user = user; // Assign the full IUser document
+        next();
+    }).catch(err => {
+        console.error("Error fetching user in auth middleware:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    });
+
   } catch (err) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
