@@ -6,7 +6,8 @@ export interface ITask extends Document {
   status: 'todo' | 'in-progress' | 'done';
   priority: 'low' | 'medium' | 'high';
   deadline: Date;
-  projectId: Schema.Types.ObjectId;
+  projectId?: Schema.Types.ObjectId; // Made optional
+  userId: Schema.Types.ObjectId;
 }
 
 const TaskSchema: Schema = new Schema({
@@ -14,7 +15,8 @@ const TaskSchema: Schema = new Schema({
   status: { type: String, enum: ['todo', 'in-progress', 'done'], default: 'todo' },
   priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
   deadline: { type: Date, required: true },
-  projectId: { type: Schema.Types.ObjectId, ref: 'Project', required: true },
+  projectId: { type: Schema.Types.ObjectId, ref: 'Project', required: false }, // Made optional
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
 export default mongoose.model<ITask>('Task', TaskSchema);

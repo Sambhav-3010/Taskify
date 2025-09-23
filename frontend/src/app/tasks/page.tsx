@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; // Import Card components
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 
 export default function TasksPage() {
@@ -24,12 +24,11 @@ export default function TasksPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  // State for the new task form (always visible now)
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState('todo');
   const [priority, setPriority] = useState('medium');
   const [deadline, setDeadline] = useState('');
-  const [projectId, setProjectId] = useState('');
+  const [projectId, setProjectId] = useState('no-project-selected');
   const [creatingTask, setCreatingTask] = useState(false);
 
   const fetchProjects = async () => {
@@ -61,7 +60,7 @@ export default function TasksPage() {
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks`,
-        { title, status, priority, deadline, projectId },
+        { title, status, priority, deadline, projectId: projectId === "no-project-selected" ? undefined : projectId },
         { withCredentials: true }
       );
       alert('Task created successfully!');
@@ -69,7 +68,7 @@ export default function TasksPage() {
       setStatus('todo');
       setPriority('medium');
       setDeadline('');
-      setProjectId('');
+      setProjectId('no-project-selected');
       router.push('/dashboard');
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -92,7 +91,7 @@ export default function TasksPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-md shadow-lg transform transition-all duration-300 hover:scale-105">
+      <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
           <CardTitle className="text-3xl font-extrabold text-center text-gray-800 dark:text-white mb-2">Create New Task</CardTitle>
           <CardDescription className="text-center text-gray-600 dark:text-gray-400">Fill in the details below to add a new task.</CardDescription>
@@ -112,12 +111,13 @@ export default function TasksPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="projectId" className="text-gray-700 dark:text-gray-300">Project</Label>
+              <Label htmlFor="projectId" className="text-gray-700 dark:text-gray-300">Project (Optional)</Label>
               <Select value={projectId} onValueChange={setProjectId} disabled={creatingTask}>
                 <SelectTrigger className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                   <SelectValue placeholder="Select a project" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-gray-800 dark:text-white">
+                  <SelectItem value="no-project-selected">No Project</SelectItem>
                   {projects.length === 0 ? (
                     <SelectItem value="no-projects" disabled>No projects available</SelectItem>
                   ) : (
@@ -169,7 +169,7 @@ export default function TasksPage() {
               />
             </div>
             <Button type="submit" disabled={creatingTask}
-                    className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md hover:bg-gray-700 transition-colors duration-200 ease-in-out transform hover:scale-105"
+                    className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md hover:bg-gray-700 transition-colors duration-200 ease-in-out"
             >
               {creatingTask ? 'Creating...' : 'Create Task'}
             </Button>

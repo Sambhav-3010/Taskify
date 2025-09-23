@@ -9,6 +9,7 @@ import passport from "./utils/passport";
 import session from "express-session";
 import projectRoutes from "./routes/project.routes";
 import taskRoutes from "./routes/task.routes";
+import eventRoutes from "./routes/event.routes";
 
 dotenv.config();
 
@@ -51,6 +52,7 @@ app.use("/auth", authRoutes);
 app.use("/chats", chatRoutes);
 app.use("/projects", projectRoutes);
 app.use("/tasks", taskRoutes);
+app.use("/events", eventRoutes);
 
 async function start() {
   try {

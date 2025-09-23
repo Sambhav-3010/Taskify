@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
@@ -8,17 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
+import { useEffect } from 'react';
 
-export default function EventsPage() {
-  const [loading, setLoading] = useState(true);
+export default function ProjectsPage() {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [creatingProject, setCreatingProject] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [date, setDate] = useState('');
-  const [creatingEvent, setCreatingEvent] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -27,37 +25,35 @@ export default function EventsPage() {
       router.push('/auth/login');
       return;
     }
-    setLoading(false);
   }, [user, authLoading, router]);
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCreatingEvent(true);
+    setCreatingProject(true);
     setError(null);
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/events`,
-        { title, description, date },
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`,
+        { name, description },
         { withCredentials: true }
       );
-      alert('Event created successfully!');
-      setTitle('');
+      alert('Project created successfully!');
+      setName('');
       setDescription('');
-      setDate('');
       router.push('/dashboard');
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Failed to create event.");
+        setError(err.response?.data?.message || "Failed to create project.");
       } else {
-        setError("Failed to create event.");
+        setError("Failed to create project.");
       }
     } finally {
-      setCreatingEvent(false);
+      setCreatingProject(false);
     }
   };
 
-  if (loading || authLoading) {
-    return <div className="container mx-auto p-4">Loading event creation form...</div>;
+  if (authLoading) {
+    return <div className="container mx-auto p-4">Loading...</div>;
   }
 
   if (error) {
@@ -68,20 +64,20 @@ export default function EventsPage() {
     <div className="flex min-h-screen items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
-          <CardTitle className="text-3xl font-extrabold text-center text-gray-800 dark:text-white mb-2">Create New Event</CardTitle>
-          <CardDescription className="text-center text-gray-600 dark:text-gray-400">Fill in the details below to add a new event.</CardDescription>
+          <CardTitle className="text-3xl font-extrabold text-center text-gray-800 dark:text-white mb-2">Create New Project</CardTitle>
+          <CardDescription className="text-center text-gray-600 dark:text-gray-400">Fill in the details below to add a new project.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreateSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="title" className="text-gray-700 dark:text-gray-300">Event Title</Label>
+              <Label htmlFor="name" className="text-gray-700 dark:text-gray-300">Project Name</Label>
               <Input
-                id="title"
+                id="name"
                 type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
-                disabled={creatingEvent}
+                disabled={creatingProject}
                 className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
@@ -93,26 +89,14 @@ export default function EventsPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
-                disabled={creatingEvent}
+                disabled={creatingProject}
                 className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="date" className="text-gray-700 dark:text-gray-300">Date</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                disabled={creatingEvent}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-            <Button type="submit" disabled={creatingEvent}
+            <Button type="submit" disabled={creatingProject}
                     className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md hover:bg-gray-700 transition-colors duration-200 ease-in-out"
             >
-              {creatingEvent ? 'Creating...' : 'Create Event'}
+              {creatingProject ? 'Creating...' : 'Create Project'}
             </Button>
           </form>
         </CardContent>

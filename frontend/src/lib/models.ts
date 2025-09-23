@@ -3,6 +3,7 @@ export interface Project {
   name: string;
   description: string;
   createdAt: string;
+  userId: string;
 }
 
 export interface Task {
@@ -11,13 +12,14 @@ export interface Task {
   status: "todo" | "in-progress" | "done";
   priority: "low" | "medium" | "high";
   deadline: string;
-  projectId: string;
+  projectId?: string; // Made optional
+  userId: string;
 }
 
 export interface Event {
-  id: string
-  title: string
-  date: string
-  status: "Upcoming" | "In Progress" | "Completed"
-  tasks: Task[]
+  _id: string;
+  title: string;
+  description: string;
+  date: string;
+  userId: string;
 }

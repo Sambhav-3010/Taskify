@@ -1,6 +1,7 @@
 import mongoose, { Document, Model, Schema , Types} from "mongoose";
 import { IProject } from "./Project";
 import { ITask } from "./Task";
+import { IEvent } from "./Event";
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
@@ -10,6 +11,7 @@ export interface IUser extends Document {
   createdAt: Date;
   projects: Types.ObjectId[] | IProject[]; // References to Project documents
   tasks: Types.ObjectId[] | ITask[];     // References to Task documents
+  events: Types.ObjectId[] | IEvent[];   // References to Event documents
 }
 
 const UserSchema = new Schema<IUser>(
@@ -19,6 +21,7 @@ const UserSchema = new Schema<IUser>(
     name: { type: String },
     projects: [{ type: Schema.Types.ObjectId, ref: 'Project' }],
     tasks: [{ type: Schema.Types.ObjectId, ref: 'Task' }],
+    events: [{ type: Schema.Types.ObjectId, ref: 'Event' }],
   },
   { timestamps: true }
 );
