@@ -5,6 +5,7 @@ import chatRoutes from "./routes/chat.routes";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import mongoose from "mongoose";
+import passport from "./utils/passport";
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
@@ -21,6 +22,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(passport.initialize());
 
 async function start() {
   try {
