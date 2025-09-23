@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 const Nabar = () => {
   const { user, logout } = useAuth();
   return (
-    <header className="border-b border-border bg-card">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-card">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-4">

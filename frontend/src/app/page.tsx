@@ -5,11 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowRight, Calendar, Users, Zap } from "lucide-react"
 import Link from "next/link"
+import LandingPageSkeleton from "@/components/landing-page-skeleton";
 
 export default function LandingPage() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth();
 
   return (
+    <>
+      {loading ? (
+        <LandingPageSkeleton />
+      ) : (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <main className="container mx-auto px-4 py-16">
@@ -22,7 +27,7 @@ export default function LandingPage() {
             Create, organize, and collaborate on events seamlessly. Let AI help you plan while you focus on what matters
             most.
           </p>
-          {!user && (
+          {!loading && !user && (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/auth/signup">
                 <Button size="lg" className="w-full sm:w-auto">
@@ -37,6 +42,7 @@ export default function LandingPage() {
               </Link>
             </div>
           )}
+          {loading && <div className="h-[76px]"></div>} {/* Placeholder for buttons (adjust height as needed) */}
         </div>
 
         {/* Features */}
@@ -73,7 +79,7 @@ export default function LandingPage() {
         </div>
 
         {/* CTA Section */}
-        {!user && (
+        {!loading && !user && (
           <div className="text-center bg-card border border-border rounded-lg p-8">
             <h3 className="text-2xl font-bold text-foreground mb-4">Ready to streamline your events?</h3>
             <p className="text-muted-foreground mb-6">
@@ -87,7 +93,10 @@ export default function LandingPage() {
             </Link>
           </div>
         )}
+        {loading && <div className="h-[200px]"></div>} {/* Placeholder for CTA section (adjust height as needed) */}
       </main>
     </div>
+      )}
+    </>
   )
 }

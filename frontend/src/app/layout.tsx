@@ -38,7 +38,7 @@ export default function RootLayout({
       className={`${robotoMono.variable} ${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
-      <body>
+      <body className="pt-[var(--navbar-height)]">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

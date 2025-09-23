@@ -37,7 +37,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (isDemoMode) {
-      console.log("[v0] Running in demo mode - Firebase not configured")
       setLoading(false)
       return
     }
@@ -85,7 +84,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     if (isDemoMode) {
-      console.log("[v0] Demo mode: Simulating logout")
       setUser(null)
       return
     }
