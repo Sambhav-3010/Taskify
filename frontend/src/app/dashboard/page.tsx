@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Plus, Send } from 'lucide-react';
+import { CalendarDays, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Project, Task } from '@/lib/models';
 import axios from 'axios';

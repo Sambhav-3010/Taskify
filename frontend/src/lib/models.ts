@@ -11,7 +11,7 @@ export interface Task {
   status: "todo" | "in-progress" | "done";
   priority: "low" | "medium" | "high";
   deadline: string;
-  projectId: string; // This will be the Project ID
+  projectId: string;
 }
 
 export interface Event {

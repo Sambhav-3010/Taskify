@@ -7,7 +7,6 @@ import { Project } from '@/lib/models';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -15,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; // Import Card components
 import { useAuth } from '@/context/AuthContext';
 
 export default function TasksPage() {
@@ -59,7 +59,7 @@ export default function TasksPage() {
     setCreatingTask(true);
     setError(null);
     try {
-      const response = await axios.post(
+      await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks`,
         { title, status, priority, deadline, projectId },
         { withCredentials: true }
@@ -70,10 +70,13 @@ export default function TasksPage() {
       setPriority('medium');
       setDeadline('');
       setProjectId('');
-      router.push('/dashboard'); // Redirect to dashboard after creation
-    } catch (err: any) {
-      console.error('Failed to create task:', err);
-      setError(err.response?.data?.message || 'Failed to create task.');
+      router.push('/dashboard');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || "Failed to create task.");
+      } else {
+        setError("Failed to create task.");
+      }
     } finally {
       setCreatingTask(false);
     }
@@ -88,82 +91,91 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Create New Task</h1>
-      <div className="max-w-md mx-auto">
-        <form onSubmit={handleCreateSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="title">Task Title</Label>
-            <Input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              disabled={creatingTask}
-            />
-          </div>
-          <div>
-            <Label htmlFor="projectId">Project</Label>
-            <Select value={projectId} onValueChange={setProjectId} disabled={creatingTask}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a project" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.length === 0 ? (
-                  <SelectItem value="no-projects" disabled>No projects available</SelectItem>
-                ) : (
-                  projects.map((project) => (
-                    <SelectItem key={project._id} value={project._id}>
-                      {project.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={setStatus} disabled={creatingTask}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select a status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todo">To Do</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="done">Done</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="priority">Priority</Label>
-            <Select value={priority} onValueChange={setPriority} disabled={creatingTask}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select a priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="deadline">Deadline</Label>
-            <Input
-              id="deadline"
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              required
-              disabled={creatingTask}
-            />
-          </div>
-          <Button type="submit" disabled={creatingTask}>
-            {creatingTask ? 'Creating...' : 'Create Task'}
-          </Button>
-        </form>
-      </div>
+    <div className="flex min-h-screen items-center justify-center p-4 bg-background">
+      <Card className="w-full max-w-md shadow-lg transform transition-all duration-300 hover:scale-105">
+        <CardHeader>
+          <CardTitle className="text-3xl font-extrabold text-center text-gray-800 dark:text-white mb-2">Create New Task</CardTitle>
+          <CardDescription className="text-center text-gray-600 dark:text-gray-400">Fill in the details below to add a new task.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleCreateSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="title" className="text-gray-700 dark:text-gray-300">Task Title</Label>
+              <Input
+                id="title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                disabled={creatingTask}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="projectId" className="text-gray-700 dark:text-gray-300">Project</Label>
+              <Select value={projectId} onValueChange={setProjectId} disabled={creatingTask}>
+                <SelectTrigger className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:text-white">
+                  {projects.length === 0 ? (
+                    <SelectItem value="no-projects" disabled>No projects available</SelectItem>
+                  ) : (
+                    projects.map((project) => (
+                      <SelectItem key={project._id} value={project._id}>
+                        {project.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status" className="text-gray-700 dark:text-gray-300">Status</Label>
+              <Select value={status} onValueChange={setStatus} disabled={creatingTask}>
+                <SelectTrigger className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:text-white">
+                  <SelectItem value="todo">To Do</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="priority" className="text-gray-700 dark:text-gray-300">Priority</Label>
+              <Select value={priority} onValueChange={setPriority} disabled={creatingTask}>
+                <SelectTrigger className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <SelectValue placeholder="Select a priority" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:text-white">
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="deadline" className="text-gray-700 dark:text-gray-300">Deadline</Label>
+              <Input
+                id="deadline"
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                required
+                disabled={creatingTask}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+            </div>
+            <Button type="submit" disabled={creatingTask}
+                    className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md hover:bg-gray-700 transition-colors duration-200 ease-in-out transform hover:scale-105"
+            >
+              {creatingTask ? 'Creating...' : 'Create Task'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

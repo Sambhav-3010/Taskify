@@ -22,11 +22,7 @@ const Navbar = () => {
           withCredentials: true,
         }
       );
-
-      // Clear user from context
       setUser(null);
-
-      // Optional: redirect to login or home
       router.push("/auth/login");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -41,14 +37,12 @@ const Navbar = () => {
             <h1 className="text-2xl font-bold text-foreground">EventFlow</h1>
           </Link>
 
-          <nav className="hidden md:flex items-center space-x-4">
-            <Link href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
-              Dashboard
-            </Link>
-          </nav>
-
           <div className="flex items-center space-x-2">
-            <div className="inline cursor-text">{user?.name}</div>
+            {user && (
+              <Button variant="name" className="inline cursor-text">
+                {user?.name}
+              </Button>
+            )}
             <Link href="/profile">
               <Button variant="outline" size="sm">
                 <User2Icon />
@@ -59,6 +53,15 @@ const Navbar = () => {
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
+            {user && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => router.push("/dashboard")}
+              >
+                Dashboard
+              </Button>
+            )}
           </div>
         </div>
       </div>
