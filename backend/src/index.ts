@@ -7,6 +7,8 @@ import authRoutes from "./routes/auth.routes";
 import mongoose from "mongoose";
 import passport from "./utils/passport";
 import session from "express-session";
+import projectRoutes from "./routes/project.routes";
+import taskRoutes from "./routes/task.routes";
 
 dotenv.config();
 
@@ -47,6 +49,8 @@ app.get("/", (_req: Request, res: Response) => {
 });
 app.use("/auth", authRoutes);
 app.use("/chats", chatRoutes);
+app.use("/projects", projectRoutes);
+app.use("/tasks", taskRoutes);
 
 async function start() {
   try {
