@@ -40,7 +40,7 @@ function ProfileContent() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>Appearance</CardTitle>
-            <CardDescription>Customize how EventFlow looks for you</CardDescription>
+            <CardDescription>Customize how Taskify looks for you</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">

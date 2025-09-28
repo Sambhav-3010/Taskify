@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -95,7 +96,55 @@ export default function ProjectsPage() {
   };
 
   if (loading || authLoading) {
-    return <div className="container mx-auto p-4">Loading projects and tasks...</div>;
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold mb-2">Your Projects</h1>
+          <Button className="flex items-center space-x-2" disabled>
+            <Plus className="h-5 w-5" />
+            <span>Add New Project</span>
+          </Button>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <div className="flex items-center space-x-2">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                  </div>
+                </div>
+                <Skeleton className="h-4 w-full mt-2" />
+                <Skeleton className="h-4 w-1/2 mt-2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-5 w-1/4 mb-2 mt-4" />
+                <div className="space-y-2">
+                  <Card className="p-3 border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-start justify-between">
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <Skeleton className="h-3 w-2/3 mt-1" />
+                    <Skeleton className="h-3 w-1/3 mt-2" />
+                  </Card>
+                  <Card className="p-3 border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-start justify-between">
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <Skeleton className="h-3 w-2/3 mt-1" />
+                    <Skeleton className="h-3 w-1/3 mt-2" />
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (error) {

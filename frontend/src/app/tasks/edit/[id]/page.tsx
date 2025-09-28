@@ -13,9 +13,10 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomSelect, CustomSelectItem } from '@/components/CustomSelect';
 import { ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EditTaskPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);   
+  const { id } = use(params);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
@@ -84,7 +85,50 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
   };
 
   if (loading || authLoading) {
-    return <div className="container mx-auto p-4">Loading task...</div>;
+    return (
+      <div className="min-h-screen bg-background p-4 flex items-start justify-center pt-8">
+        <Card className="w-full max-w-2xl mx-auto shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <Button variant="ghost" size="icon" className="mr-2" disabled>
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <Skeleton className="h-8 w-1/2" />
+              <div className="w-10"></div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (error) {
@@ -120,7 +164,7 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
               </Button>
             </Link>
             <CardTitle className="text-2xl font-bold text-center flex-grow">Edit Task</CardTitle>
-            <div className="w-10"></div>
+            <div className="w-10"></div> {/* Spacer to balance the back button */}
           </div>
         </CardHeader>
         <CardContent className="pt-4">
