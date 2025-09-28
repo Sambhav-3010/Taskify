@@ -84,6 +84,7 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold mb-2">Your Events</h1>
         <Link href="/events/new">
           <Button className="flex items-center space-x-2">
             <Plus className="h-5 w-5" />
@@ -102,7 +103,7 @@ export default function EventsPage() {
             <Card key={event._id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">{event.title}</CardTitle>
+                  <CardTitle className="text-lg mb-2">{event.title}</CardTitle>
                   <div className="flex items-center space-x-2">
                     <Button variant="ghost" size="icon" onClick={() => router.push(`/events/edit/${event._id}`)}>
                       <Pencil className="h-4 w-4" />
@@ -114,13 +115,13 @@ export default function EventsPage() {
                     </Button>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{event.description || 'No description provided.'}</p>
-                <p className="text-sm text-muted-foreground flex items-center space-x-1">
+                <CardDescription className="flex items-center space-x-2 mt-2">
                   <CalendarDays className="h-4 w-4" />
                   <span>Date: {event.date ? new Date(event.date).toLocaleDateString() : 'N/A'}</span>
-                </p>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mt-4">{event.description || 'No description provided.'}</p>
               </CardContent>
             </Card>
           ))

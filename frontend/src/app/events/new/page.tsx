@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function NewEventPage() {
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export default function NewEventPage() {
         { title, description, date },
         { withCredentials: true }
       );
-      alert('Event created successfully!');
+      toast.success('Event created successfully!');
       setTitle('');
       setDescription('');
       setDate('');
@@ -67,24 +69,24 @@ export default function NewEventPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+    <div className="min-h-screen bg-background p-4 flex items-start justify-center pt-8">
       <Card className="w-full max-w-md shadow-lg">
-        <CardHeader>
-          <div className="flex items-center justify-between mb-4">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
             <Link href="/events">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="mr-2">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <CardTitle className="text-3xl font-extrabold text-gray-800 dark:text-white flex-grow text-center">Create New Event</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center flex-grow">Create New Event</CardTitle>
             <div className="w-10"></div> {/* Spacer to balance the back button */}
           </div>
-          <CardDescription className="text-center text-gray-600 dark:text-gray-400">Fill in the details below to add a new event.</CardDescription>
+          <CardDescription className="text-center text-muted-foreground mt-2">Fill in the details below to add a new event.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <form onSubmit={handleCreateSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="title" className="text-gray-700 dark:text-gray-300">Event Title</Label>
+              <Label htmlFor="title">Event Title</Label>
               <Input
                 id="title"
                 type="text"
@@ -92,23 +94,20 @@ export default function NewEventPage() {
                 onChange={(e) => setTitle(e.target.value)}
                 required
                 disabled={creatingEvent}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">Description</Label>
-              <Input
+              <Label htmlFor="description">Description</Label>
+              <Textarea
                 id="description"
-                type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
                 disabled={creatingEvent}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date" className="text-gray-700 dark:text-gray-300">Date</Label>
+              <Label htmlFor="date">Date</Label>
               <Input
                 id="date"
                 type="date"
@@ -116,12 +115,9 @@ export default function NewEventPage() {
                 onChange={(e) => setDate(e.target.value)}
                 required
                 disabled={creatingEvent}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
-            <Button type="submit" disabled={creatingEvent}
-                    className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md hover:bg-gray-700 transition-colors duration-200 ease-in-out"
-            >
+            <Button type="submit" disabled={creatingEvent} className="w-full">
               {creatingEvent ? 'Creating...' : 'Create Event'}
             </Button>
           </form>

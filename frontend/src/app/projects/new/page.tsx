@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function NewProjectPage() {
   const [name, setName] = useState('');
@@ -38,7 +40,7 @@ export default function NewProjectPage() {
         { name, description },
         { withCredentials: true }
       );
-      alert('Project created successfully!');
+      toast.success('Project created successfully!');
       setName('');
       setDescription('');
       router.push('/projects'); // Redirect to projects list after creation
@@ -62,24 +64,24 @@ export default function NewProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+    <div className="min-h-screen bg-background p-4 flex items-start justify-center pt-8">
       <Card className="w-full max-w-md shadow-lg">
-        <CardHeader>
-          <div className="flex items-center justify-between mb-4">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
             <Link href="/projects">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="mr-2">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <CardTitle className="text-3xl font-extrabold text-gray-800 dark:text-white flex-grow text-center">Create New Project</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center flex-grow">Create New Project</CardTitle>
             <div className="w-10"></div> {/* Spacer to balance the back button */}
           </div>
-          <CardDescription className="text-center text-gray-600 dark:text-gray-400">Fill in the details below to add a new project.</CardDescription>
+          <CardDescription className="text-center text-muted-foreground mt-2">Fill in the details below to add a new project.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <form onSubmit={handleCreateSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-gray-700 dark:text-gray-300">Project Name</Label>
+              <Label htmlFor="name">Project Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -87,24 +89,19 @@ export default function NewProjectPage() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={creatingProject}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">Description</Label>
-              <Input
+              <Label htmlFor="description">Description</Label>
+              <Textarea
                 id="description"
-                type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
                 disabled={creatingProject}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
-            <Button type="submit" disabled={creatingProject}
-                    className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md hover:bg-gray-700 transition-colors duration-200 ease-in-out"
-            >
+            <Button type="submit" disabled={creatingProject} className="w-full">
               {creatingProject ? 'Creating...' : 'Create Project'}
             </Button>
           </form>

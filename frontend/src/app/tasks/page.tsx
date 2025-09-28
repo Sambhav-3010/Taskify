@@ -100,6 +100,7 @@ export default function TasksPage() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold mb-2">Your Tasks</h1>
         <Link href="/tasks/new">
           <Button className="flex items-center space-x-2">
             <Plus className="h-5 w-5" />
@@ -118,7 +119,7 @@ export default function TasksPage() {
             <Card key={task._id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">{task.title}</CardTitle>
+                  <CardTitle className="text-lg mb-2">{task.title}</CardTitle>
                   <div className="flex items-center space-x-2">
                     <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
                     <Button variant="ghost" size="icon" onClick={() => router.push(`/tasks/edit/${task._id}`)}>
@@ -131,14 +132,14 @@ export default function TasksPage() {
                     </Button>
                   </div>
                 </div>
-                <CardDescription className="flex items-center space-x-2">
+                <CardDescription className="flex items-center space-x-2 mt-2">
                   <CalendarDays className="h-4 w-4" />
                   <span>Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A'}</span>
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">Priority: {task.priority}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-4">Priority: {task.priority}</p>
+                <p className="text-sm text-muted-foreground mt-2">
                   Project: {task.projectId
                     ? (typeof task.projectId === 'string'
                         ? task.projectId

@@ -105,6 +105,7 @@ export default function ProjectsPage() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold mb-2">Your Projects</h1>
         <Link href="/projects/new">
           <Button className="flex items-center space-x-2">
             <Plus className="h-5 w-5" />
@@ -123,7 +124,7 @@ export default function ProjectsPage() {
             <Card key={project._id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">{project.name}</CardTitle>
+                  <CardTitle className="text-lg mb-2">{project.name}</CardTitle>
                   <div className="flex items-center space-x-2">
                     <Button variant="ghost" size="icon" onClick={() => router.push(`/projects/edit/${project._id}`)}>
                       <Pencil className="h-4 w-4" />
@@ -135,15 +136,15 @@ export default function ProjectsPage() {
                     </Button>
                   </div>
                 </div>
-                <CardDescription>
+                <CardDescription className="mt-2">
                   {project.description || 'No description provided.'}
                 </CardDescription>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mt-2">
                   Created: {project.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'N/A'}
                 </p>
               </CardHeader>
               <CardContent>
-                <h3 className="text-md font-semibold mb-2">Tasks:</h3>
+                <h3 className="text-md font-semibold mb-2 mt-4">Tasks:</h3>
                 {tasks.filter(task => {
                   let taskId: string | undefined;
                   if (task.projectId) {
@@ -178,7 +179,7 @@ export default function ProjectsPage() {
                           <CalendarDays className="h-3 w-3" />
                           <span>Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A'}</span>
                         </CardDescription>
-                        <p className="text-muted-foreground text-sm">Priority: {task.priority}</p>
+                        <p className="text-muted-foreground text-sm mt-2">Priority: {task.priority}</p>
                       </Card>
                     ))}
                   </div>

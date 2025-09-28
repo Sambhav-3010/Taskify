@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use,useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Event } from '@/lib/models';
@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft } from 'lucide-react';
 
 export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -34,10 +35,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
     const fetchEvent = async () => {
       try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/events/${id}`,
-          { withCredentials: true }
-        );
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/events/${id}`, { withCredentials: true });
         const fetchedEvent = response.data.event;
         setEvent(fetchedEvent);
         setTitle(fetchedEvent.title);
@@ -59,16 +57,12 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     e.preventDefault();
     setError(null);
     try {
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/events/${id}`,
-        {
-          title,
-          description,
-          date,
-          location,
-        },
-        { withCredentials: true }
-      );
+      await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/events/${id}`, {
+        title,
+        description,
+        date,
+        location,
+      }, { withCredentials: true });
       router.push('/events');
     } catch (err) {
       console.error('Failed to update event:', err);
@@ -89,20 +83,22 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="flex justify-between items-center mb-8">
-        <Link href="/events">
-          <Button variant="outline">Back to Events</Button>
-        </Link>
-      </div>
-
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <h2 className="text-2xl font-semibold">Event Details</h2>
+    <div className="min-h-screen bg-background p-4 flex items-start justify-center pt-8">
+      <Card className="w-full max-w-2xl mx-auto shadow-lg">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <Link href="/events">
+              <Button variant="ghost" size="icon" className="mr-2">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <CardTitle className="text-2xl font-bold text-center flex-grow">Edit Event</CardTitle>
+            <div className="w-10"></div> {/* Spacer to balance the back button */}
+          </div>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
+        <CardContent className="pt-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
@@ -112,7 +108,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 required
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
@@ -120,7 +116,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="date">Date</Label>
               <Input
                 id="date"
@@ -129,7 +125,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 onChange={(e) => setDate(e.target.value)}
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
               <Input
                 id="location"
@@ -139,9 +135,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
-            <Button type="submit" className="w-full">
-              Update Event
-            </Button>
+            <Button type="submit" className="w-full">Update Event</Button>
           </form>
         </CardContent>
       </Card>
