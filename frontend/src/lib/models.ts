@@ -12,7 +12,7 @@ export interface Task {
   status: "todo" | "in-progress" | "done";
   priority: "low" | "medium" | "high";
   deadline: string;
-  projectId?: string; // Made optional
+  projectId?: string | Project; // Can be string ID or populated Project object
   userId: string;
 }
 

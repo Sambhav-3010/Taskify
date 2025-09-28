@@ -7,13 +7,8 @@ import { Project } from '@/lib/models';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { CustomSelect, CustomSelectItem } from '@/components/CustomSelect';
+import { SelectTrigger, SelectValue } from '@/components/ui/select'; // Keep these for now if CustomSelect doesn't fully replace them
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
@@ -92,7 +87,7 @@ export default function NewTaskPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+    <div className="min-h-screen bg-background p-4 flex items-start justify-center pt-8">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
           <div className="flex items-center justify-between mb-4">
@@ -102,7 +97,7 @@ export default function NewTaskPage() {
               </Button>
             </Link>
             <CardTitle className="text-3xl font-extrabold text-gray-800 dark:text-white flex-grow text-center">Create New Task</CardTitle>
-            <div className="w-10"></div> {/* Spacer to balance the back button */}
+            <div className="w-10"></div>
           </div>
           <CardDescription className="text-center text-gray-600 dark:text-gray-400">Fill in the details below to add a new task.</CardDescription>
         </CardHeader>
@@ -122,49 +117,55 @@ export default function NewTaskPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="projectId" className="text-gray-700 dark:text-gray-300">Project (Optional)</Label>
-              <Select value={projectId} onValueChange={setProjectId} disabled={creatingTask}>
-                <SelectTrigger className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <SelectValue placeholder="Select a project" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:text-white">
-                  <SelectItem value="no-project-selected">No Project</SelectItem>
-                  {projects.length === 0 ? (
-                    <SelectItem value="no-projects" disabled>No projects available</SelectItem>
-                  ) : (
-                    projects.map((project) => (
-                      <SelectItem key={project._id} value={project._id}>
-                        {project.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <CustomSelect
+                value={projectId}
+                onValueChange={setProjectId}
+                disabled={creatingTask}
+                placeholder="Select a project"
+                triggerClassName="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                contentClassName="dark:bg-gray-800 dark:text-white"
+              >
+                <CustomSelectItem value="no-project-selected">No Project</CustomSelectItem>
+                {projects.length === 0 ? (
+                  <CustomSelectItem value="no-projects" disabled>No projects available</CustomSelectItem>
+                ) : (
+                  projects.map((project) => (
+                    <CustomSelectItem key={project._id} value={project._id}>
+                      {project.name}
+                    </CustomSelectItem>
+                  ))
+                )}
+              </CustomSelect>
             </div>
             <div className="space-y-2">
               <Label htmlFor="status" className="text-gray-700 dark:text-gray-300">Status</Label>
-              <Select value={status} onValueChange={setStatus} disabled={creatingTask}>
-                <SelectTrigger className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <SelectValue placeholder="Select a status" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:text-white">
-                  <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
-                </SelectContent>
-              </Select>
+              <CustomSelect
+                value={status}
+                onValueChange={setStatus}
+                disabled={creatingTask}
+                placeholder="Select a status"
+                triggerClassName="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                contentClassName="dark:bg-gray-800 dark:text-white"
+              >
+                <CustomSelectItem value="todo">To Do</CustomSelectItem>
+                <CustomSelectItem value="in-progress">In Progress</CustomSelectItem>
+                <CustomSelectItem value="done">Done</CustomSelectItem>
+              </CustomSelect>
             </div>
             <div className="space-y-2">
               <Label htmlFor="priority" className="text-gray-700 dark:text-gray-300">Priority</Label>
-              <Select value={priority} onValueChange={setPriority} disabled={creatingTask}>
-                <SelectTrigger className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <SelectValue placeholder="Select a priority" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:text-white">
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
+              <CustomSelect
+                value={priority}
+                onValueChange={setPriority}
+                disabled={creatingTask}
+                placeholder="Select a priority"
+                triggerClassName="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                contentClassName="dark:bg-gray-800 dark:text-white"
+              >
+                <CustomSelectItem value="low">Low</CustomSelectItem>
+                <CustomSelectItem value="medium">Medium</CustomSelectItem>
+                <CustomSelectItem value="high">High</CustomSelectItem>
+              </CustomSelect>
             </div>
             <div className="space-y-2">
               <Label htmlFor="deadline" className="text-gray-700 dark:text-gray-300">Deadline</Label>

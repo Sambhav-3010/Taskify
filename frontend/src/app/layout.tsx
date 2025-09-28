@@ -3,11 +3,10 @@ import type { Metadata } from "next";
 import { Roboto_Mono } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-
-import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Event Management System",

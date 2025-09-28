@@ -5,27 +5,33 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { Project } from '@/lib/models';
+import { Project, Task } from '@/lib/models'; // Import Task model
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
-import { Plus } from 'lucide-react';
+import { Plus, CalendarDays } from 'lucide-react'; // Import CalendarDays icon
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge'; // Import Badge component
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]); // State for tasks
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const fetchProjects = async () => {
+  const fetchProjectsAndTasks = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`, { withCredentials: true });
-      setProjects(response.data.map((p: Project) => JSON.parse(JSON.stringify(p))));
+      const [projectsResponse, tasksResponse] = await Promise.all([
+        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`, { withCredentials: true }),
+        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks`, { withCredentials: true }),
+      ]);
+      setProjects(projectsResponse.data.map((p: Project) => JSON.parse(JSON.stringify(p))));
+      setTasks(tasksResponse.data.tasks.map((t: Task) => JSON.parse(JSON.stringify(t))));
     } catch (err) {
-      console.error('Failed to fetch projects:', err);
-      setError('Failed to load projects.');
+      console.error('Failed to fetch projects or tasks:', err);
+      setError('Failed to load projects and tasks.');
     } finally {
       setLoading(false);
     }
@@ -38,11 +44,24 @@ export default function ProjectsPage() {
       router.push('/auth/login');
       return;
     }
-    fetchProjects();
+    fetchProjectsAndTasks();
   }, [user, authLoading, router]);
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'done':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'todo':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+    }
+  };
+
   if (loading || authLoading) {
-    return <div className="container mx-auto p-4">Loading projects...</div>;
+    return <div className="container mx-auto p-4">Loading projects and tasks...</div>;
   }
 
   if (error) {
@@ -68,15 +87,57 @@ export default function ProjectsPage() {
           </p>
         ) : (
           projects.map((project) => (
-            <Card key={project._id} className="cursor-pointer hover:shadow-md transition-shadow">
+            <Card key={project._id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <CardTitle className="text-lg">{project.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{project.description || 'No description provided.'}</p>
+                <CardDescription>
+                  {project.description || 'No description provided.'}
+                </CardDescription>
                 <p className="text-sm text-muted-foreground">
                   Created: {project.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'N/A'}
                 </p>
+              </CardHeader>
+              <CardContent>
+                <h3 className="text-md font-semibold mb-2">Tasks:</h3>
+                {tasks.filter(task => {
+                  let taskId: string | undefined;
+                  if (task.projectId) {
+                    if (typeof task.projectId === 'object') {
+                      taskId = task.projectId._id;
+                    } else {
+                      taskId = task.projectId;
+                    }
+                  }
+                  return taskId === project._id;
+                }).length === 0 ? (
+                  <p className="text-muted-foreground text-sm">No tasks for this project.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {tasks.filter(task => {
+                      let taskId: string | undefined;
+                      if (task.projectId) {
+                        if (typeof task.projectId === 'object') {
+                          taskId = task.projectId._id;
+                        } else {
+                          taskId = task.projectId;
+                        }
+                      }
+                      return taskId === project._id;
+                    }).map((task) => (
+                      <Card key={task._id} className="p-3 border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-base">{task.title}</CardTitle>
+                          <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
+                        </div>
+                        <CardDescription className="flex items-center space-x-1 text-sm mt-1">
+                          <CalendarDays className="h-3 w-3" />
+                          <span>Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A'}</span>
+                        </CardDescription>
+                        <p className="text-muted-foreground text-sm">Priority: {task.priority}</p>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))
