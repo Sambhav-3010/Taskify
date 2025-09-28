@@ -4,7 +4,7 @@ export interface IEvent extends Document {
   title: string;
   description: string;
   date: Date;
-  userId: Schema.Types.ObjectId;
+  userId: mongoose.Schema.Types.ObjectId;
 }
 
 const EventSchema: Schema = new Schema({

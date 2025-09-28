@@ -1,12 +1,11 @@
 import { Router } from 'express';
-import { createEventHandler, getEventsHandler, updateEventHandler, deleteEventHandler } from '../controllers/EventController';
+import { EventController } from '../controllers/EventController';
 import { requireAuth } from '../middleware/auth';
 
 const router = Router();
+const eventController = new EventController();
 
-router.post('/', requireAuth, createEventHandler);
-router.get('/', requireAuth, getEventsHandler);
-router.put('/:id', requireAuth, updateEventHandler);
-router.delete('/:id', requireAuth, deleteEventHandler);
+router.post('/events', requireAuth, eventController.createEvent);
+router.get('/events', requireAuth, eventController.getEvents);
 
 export default router;

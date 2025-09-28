@@ -10,7 +10,6 @@ import session from "express-session";
 import projectRoutes from "./routes/project.routes";
 import taskRoutes from "./routes/task.routes";
 import eventRoutes from "./routes/event.routes";
-
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;

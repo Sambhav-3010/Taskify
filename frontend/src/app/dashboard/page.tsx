@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { Project, Task, Event } from '@/lib/models';
+import { Event, Project, Task } from '@/lib/models';
 import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -21,10 +21,10 @@ function DashboardContent() {
   const router = useRouter();
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading) return; // Wait for auth to load
 
     if (!user) {
-      router.push('/auth/login');
+      router.push('/auth/login'); // Redirect to login if not authenticated
       return;
     }
 

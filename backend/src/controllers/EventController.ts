@@ -1,54 +1,31 @@
 import { Request, Response } from 'express';
-import { createEvent, getEvents, updateEvent, deleteEvent } from '../services/EventService';
+import { EventService } from '../services/EventService';
+import { EventRepository } from '../repositories/EventRepository';
 import { Types } from 'mongoose';
 
-export async function createEventHandler(req: Request, res: Response): Promise<void> {
-  try {
-    const userId = req.user?._id as Types.ObjectId;
-    const event = await createEvent(req.body, userId);
-    res.status(201).json(event);
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
-  }
-}
+const eventRepository = new EventRepository();
+const eventService = new EventService(eventRepository);
 
-export async function getEventsHandler(req: Request, res: Response): Promise<void> {
-  try {
-    const userId = req.user?._id as Types.ObjectId;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const filters = req.query;
-    const { events, totalPages, currentPage } = await getEvents(filters, page, limit, userId);
-    res.status(200).json({ events, totalPages, currentPage });
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
-  }
-}
+export class EventController {
+  async createEvent(req: Request, res: Response): Promise<void> {
+    try {
+      const { title, description, date } = req.body;
+      const userId = (req.user as any)._id; // Assuming user is authenticated and userId is available in req.user
 
-export async function updateEventHandler(req: Request, res: Response): Promise<void> {
-  try {
-    const userId = req.user?._id as Types.ObjectId;
-    const event = await updateEvent(req.params.id, req.body, userId);
-    if (!event) {
-      res.status(404).json({ message: 'Event not found' });
-      return;
+      const event = await eventService.createEvent({ title, description, date, userId });
+      res.status(201).json({ message: 'Event created successfully', event });
+    } catch (error: any) {
+      res.status(500).json({ message: 'Error creating event', error: error.message });
     }
-    res.status(200).json(event);
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
   }
-}
 
-export async function deleteEventHandler(req: Request, res: Response): Promise<void> {
-  try {
-    const userId = req.user?._id as Types.ObjectId;
-    const event = await deleteEvent(req.params.id, userId);
-    if (!event) {
-      res.status(404).json({ message: 'Event not found' });
-      return;
+  async getEvents(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req.user as any)._id; // Assuming user is authenticated and userId is available in req.user
+      const events = await eventService.getEventsByUserId(userId);
+      res.status(200).json({ events });
+    } catch (error: any) {
+      res.status(500).json({ message: 'Error fetching events', error: error.message });
     }
-    res.status(200).json({ message: 'Event deleted successfully' });
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
   }
 }
