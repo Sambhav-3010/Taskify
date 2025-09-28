@@ -1,22 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Project } from '@/lib/models';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
-import { useEffect } from 'react';
+import { Plus } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function ProjectsPage() {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [creatingProject, setCreatingProject] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  const fetchProjects = async () => {
+    try {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`, { withCredentials: true });
+      setProjects(response.data.map((p: Project) => JSON.parse(JSON.stringify(p))));
+    } catch (err) {
+      console.error('Failed to fetch projects:', err);
+      setError('Failed to load projects.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -25,35 +38,11 @@ export default function ProjectsPage() {
       router.push('/auth/login');
       return;
     }
+    fetchProjects();
   }, [user, authLoading, router]);
 
-  const handleCreateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreatingProject(true);
-    setError(null);
-    try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`,
-        { name, description },
-        { withCredentials: true }
-      );
-      alert('Project created successfully!');
-      setName('');
-      setDescription('');
-      router.push('/dashboard');
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Failed to create project.");
-      } else {
-        setError("Failed to create project.");
-      }
-    } finally {
-      setCreatingProject(false);
-    }
-  };
-
-  if (authLoading) {
-    return <div className="container mx-auto p-4">Loading...</div>;
+  if (loading || authLoading) {
+    return <div className="container mx-auto p-4">Loading projects...</div>;
   }
 
   if (error) {
@@ -61,46 +50,38 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-3xl font-extrabold text-center text-gray-800 dark:text-white mb-2">Create New Project</CardTitle>
-          <CardDescription className="text-center text-gray-600 dark:text-gray-400">Fill in the details below to add a new project.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCreateSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-gray-700 dark:text-gray-300">Project Name</Label>
-              <Input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={creatingProject}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">Description</Label>
-              <Input
-                id="description"
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                disabled={creatingProject}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-            <Button type="submit" disabled={creatingProject}
-                    className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md hover:bg-gray-700 transition-colors duration-200 ease-in-out"
-            >
-              {creatingProject ? 'Creating...' : 'Create Project'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-background p-4">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Your Projects</h1>
+        <Link href="/projects/new">
+          <Button className="flex items-center space-x-2">
+            <Plus className="h-5 w-5" />
+            <span>Add New Project</span>
+          </Button>
+        </Link>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {projects.length === 0 ? (
+          <p className="text-muted-foreground">
+            No projects found. <Link href="/projects/new" className="text-primary hover:underline">Create one!</Link>
+          </p>
+        ) : (
+          projects.map((project) => (
+            <Card key={project._id} className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">{project.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">{project.description || 'No description provided.'}</p>
+                <p className="text-sm text-muted-foreground">
+                  Created: {project.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'N/A'}
+                </p>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 }

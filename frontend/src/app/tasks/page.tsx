@@ -1,43 +1,32 @@
 'use client';
 
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { Project } from '@/lib/models';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Task } from '@/lib/models';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
+import { Badge } from '@/components/ui/badge';
+import { CalendarDays, Plus } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function TasksPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const [title, setTitle] = useState('');
-  const [status, setStatus] = useState('todo');
-  const [priority, setPriority] = useState('medium');
-  const [deadline, setDeadline] = useState('');
-  const [projectId, setProjectId] = useState('no-project-selected');
-  const [creatingTask, setCreatingTask] = useState(false);
-
-  const fetchProjects = async () => {
+  const fetchTasks = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`, { withCredentials: true });
-      setProjects(response.data);
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks`, { withCredentials: true });
+      setTasks(response.data.tasks.map((t: Task) => JSON.parse(JSON.stringify(t))));
     } catch (err) {
-      console.error('Failed to fetch projects:', err);
-      setError('Failed to load projects.');
+      console.error('Failed to fetch tasks:', err);
+      setError('Failed to load tasks.');
     } finally {
       setLoading(false);
     }
@@ -50,39 +39,24 @@ export default function TasksPage() {
       router.push('/auth/login');
       return;
     }
-    fetchProjects();
+    fetchTasks();
   }, [user, authLoading, router]);
 
-  const handleCreateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreatingTask(true);
-    setError(null);
-    try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks`,
-        { title, status, priority, deadline, projectId: projectId === "no-project-selected" ? undefined : projectId },
-        { withCredentials: true }
-      );
-      alert('Task created successfully!');
-      setTitle('');
-      setStatus('todo');
-      setPriority('medium');
-      setDeadline('');
-      setProjectId('no-project-selected');
-      router.push('/dashboard');
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Failed to create task.");
-      } else {
-        setError("Failed to create task.");
-      }
-    } finally {
-      setCreatingTask(false);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'done':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'todo':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
   };
 
   if (loading || authLoading) {
-    return <div className="container mx-auto p-4">Loading projects for task creation...</div>;
+    return <div className="container mx-auto p-4">Loading tasks...</div>;
   }
 
   if (error) {
@@ -90,92 +64,51 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-3xl font-extrabold text-center text-gray-800 dark:text-white mb-2">Create New Task</CardTitle>
-          <CardDescription className="text-center text-gray-600 dark:text-gray-400">Fill in the details below to add a new task.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCreateSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-gray-700 dark:text-gray-300">Task Title</Label>
-              <Input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                disabled={creatingTask}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="projectId" className="text-gray-700 dark:text-gray-300">Project (Optional)</Label>
-              <Select value={projectId} onValueChange={setProjectId} disabled={creatingTask}>
-                <SelectTrigger className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <SelectValue placeholder="Select a project" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:text-white">
-                  <SelectItem value="no-project-selected">No Project</SelectItem>
-                  {projects.length === 0 ? (
-                    <SelectItem value="no-projects" disabled>No projects available</SelectItem>
-                  ) : (
-                    projects.map((project) => (
-                      <SelectItem key={project._id} value={project._id}>
-                        {project.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status" className="text-gray-700 dark:text-gray-300">Status</Label>
-              <Select value={status} onValueChange={setStatus} disabled={creatingTask}>
-                <SelectTrigger className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <SelectValue placeholder="Select a status" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:text-white">
-                  <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="priority" className="text-gray-700 dark:text-gray-300">Priority</Label>
-              <Select value={priority} onValueChange={setPriority} disabled={creatingTask}>
-                <SelectTrigger className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <SelectValue placeholder="Select a priority" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:text-white">
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="deadline" className="text-gray-700 dark:text-gray-300">Deadline</Label>
-              <Input
-                id="deadline"
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                required
-                disabled={creatingTask}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-            <Button type="submit" disabled={creatingTask}
-                    className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md hover:bg-gray-700 transition-colors duration-200 ease-in-out"
-            >
-              {creatingTask ? 'Creating...' : 'Create Task'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-background p-4">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Your Tasks</h1>
+        <Link href="/tasks/new">
+          <Button className="flex items-center space-x-2">
+            <Plus className="h-5 w-5" />
+            <span>Add New Task</span>
+          </Button>
+        </Link>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {tasks.length === 0 ? (
+          <p className="text-muted-foreground">
+            No tasks found. <Link href="/tasks/new" className="text-primary hover:underline">Create one!</Link>
+          </p>
+        ) : (
+          tasks.map((task) => (
+            <Card key={task._id} className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-lg">{task.title}</CardTitle>
+                  <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
+                </div>
+                <CardDescription className="flex items-center space-x-2">
+                  <CalendarDays className="h-4 w-4" />
+                  <span>Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A'}</span>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Priority: {task.priority}</p>
+                <p className="text-sm text-muted-foreground">
+                  Project: {task.projectId
+                    ? (typeof task.projectId === 'string'
+                        ? task.projectId
+                        : (typeof task.projectId === 'object' && task.projectId !== null && 'name' in task.projectId
+                            ? (task.projectId as { name: string }).name
+                            : (task.projectId as { _id: string })._id))
+                    : 'N/A'}
+                </p>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 }

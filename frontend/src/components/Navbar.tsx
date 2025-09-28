@@ -54,13 +54,17 @@ const Navbar = () => {
               Logout
             </Button>
             {user && (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => router.push("/dashboard")}
-              >
-                Dashboard
-              </Button>
+              <>
+                <Link href="/projects">
+                  <Button variant="ghost" size="sm">Projects</Button>
+                </Link>
+                <Link href="/tasks">
+                  <Button variant="ghost" size="sm">Tasks</Button>
+                </Link>
+                <Link href="/events">
+                  <Button variant="ghost" size="sm">Events</Button>
+                </Link>
+              </>
             )}
           </div>
         </div>

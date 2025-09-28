@@ -3,22 +3,31 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Event } from '@/lib/models';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
+import { CalendarDays, Plus } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function EventsPage() {
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [date, setDate] = useState('');
-  const [creatingEvent, setCreatingEvent] = useState(false);
+  const fetchEvents = async () => {
+    try {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/events`, { withCredentials: true });
+      setEvents(response.data.events.map((e: Event) => JSON.parse(JSON.stringify(e))));
+    } catch (err) {
+      console.error('Failed to fetch events:', err);
+      setError('Failed to load events.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -27,37 +36,11 @@ export default function EventsPage() {
       router.push('/auth/login');
       return;
     }
-    setLoading(false);
+    fetchEvents();
   }, [user, authLoading, router]);
 
-  const handleCreateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreatingEvent(true);
-    setError(null);
-    try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/events`,
-        { title, description, date },
-        { withCredentials: true }
-      );
-      alert('Event created successfully!');
-      setTitle('');
-      setDescription('');
-      setDate('');
-      router.push('/dashboard');
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Failed to create event.");
-      } else {
-        setError("Failed to create event.");
-      }
-    } finally {
-      setCreatingEvent(false);
-    }
-  };
-
   if (loading || authLoading) {
-    return <div className="container mx-auto p-4">Loading event creation form...</div>;
+    return <div className="container mx-auto p-4">Loading events...</div>;
   }
 
   if (error) {
@@ -65,58 +48,39 @@ export default function EventsPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-3xl font-extrabold text-center text-gray-800 dark:text-white mb-2">Create New Event</CardTitle>
-          <CardDescription className="text-center text-gray-600 dark:text-gray-400">Fill in the details below to add a new event.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCreateSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-gray-700 dark:text-gray-300">Event Title</Label>
-              <Input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                disabled={creatingEvent}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">Description</Label>
-              <Input
-                id="description"
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                disabled={creatingEvent}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="date" className="text-gray-700 dark:text-gray-300">Date</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                disabled={creatingEvent}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-            <Button type="submit" disabled={creatingEvent}
-                    className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md hover:bg-gray-700 transition-colors duration-200 ease-in-out"
-            >
-              {creatingEvent ? 'Creating...' : 'Create Event'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-background p-4">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Your Events</h1>
+        <Link href="/events/new">
+          <Button className="flex items-center space-x-2">
+            <Plus className="h-5 w-5" />
+            <span>Add New Event</span>
+          </Button>
+        </Link>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {events.length === 0 ? (
+          <p className="text-muted-foreground">
+            No events found. <Link href="/events/new" className="text-primary hover:underline">Create one!</Link>
+          </p>
+        ) : (
+          events.map((event) => (
+            <Card key={event._id} className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">{event.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">{event.description || 'No description provided.'}</p>
+                <p className="text-sm text-muted-foreground flex items-center space-x-1">
+                  <CalendarDays className="h-4 w-4" />
+                  <span>Date: {event.date ? new Date(event.date).toLocaleDateString() : 'N/A'}</span>
+                </p>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 }
