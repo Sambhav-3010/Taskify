@@ -9,9 +9,20 @@ import { Task } from '@/lib/models';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Plus } from 'lucide-react';
+import { CalendarDays, Plus, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -19,6 +30,8 @@ export default function TasksPage() {
   const [error, setError] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
   const fetchTasks = async () => {
     try {
@@ -29,6 +42,27 @@ export default function TasksPage() {
       setError('Failed to load tasks.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    setTaskToDelete(taskId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (taskToDelete) {
+      try {
+        await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks/${taskToDelete}`, { withCredentials: true });
+        toast.success('Task deleted successfully!');
+        fetchTasks(); // Refresh the list
+      } catch (err) {
+        console.error('Failed to delete task:', err);
+        toast.error('Failed to delete task.');
+      } finally {
+        setIsDeleteDialogOpen(false);
+        setTaskToDelete(null);
+      }
     }
   };
 
@@ -66,7 +100,6 @@ export default function TasksPage() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Your Tasks</h1>
         <Link href="/tasks/new">
           <Button className="flex items-center space-x-2">
             <Plus className="h-5 w-5" />
@@ -82,11 +115,21 @@ export default function TasksPage() {
           </p>
         ) : (
           tasks.map((task) => (
-            <Card key={task._id} className="cursor-pointer hover:shadow-md transition-shadow">
+            <Card key={task._id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg">{task.title}</CardTitle>
-                  <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
+                  <div className="flex items-center space-x-2">
+                    <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
+                    <Button variant="ghost" size="icon" onClick={() => router.push(`/tasks/edit/${task._id}`)}>
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">Edit Task</span>
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(task._id)}>
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete Task</span>
+                    </Button>
+                  </div>
                 </div>
                 <CardDescription className="flex items-center space-x-2">
                   <CalendarDays className="h-4 w-4" />
@@ -109,6 +152,21 @@ export default function TasksPage() {
           ))
         )}
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your task.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteTask}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

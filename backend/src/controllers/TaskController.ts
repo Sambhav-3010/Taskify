@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { FilterQuery } from 'mongoose';
 import { ITask } from '../models/Task';
-import { createTask as createTaskService, getTasks as getTasksService, updateTask as updateTaskService, deleteTask as deleteTaskService } from '../services/TaskService';
+import { createTask as createTaskService, getTasks as getTasksService, getTaskById as getTaskByIdService, updateTask as updateTaskService, deleteTask as deleteTaskService } from '../services/TaskService';
 
 export async function createTask(req: Request, res: Response): Promise<void> {
   try {
@@ -11,6 +11,24 @@ export async function createTask(req: Request, res: Response): Promise<void> {
     }
     const task = await createTaskService(req.body, req.user._id);
     res.status(201).json(task);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+export async function getTaskById(req: Request, res: Response): Promise<void> {
+  try {
+    if (!req.user || !req.user._id) {
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
+    }
+    const { id } = req.params;
+    const task = await getTaskByIdService(id, req.user._id);
+    if (!task) {
+      res.status(404).json({ message: 'Task not found' });
+      return;
+    }
+    res.status(200).json({ task });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

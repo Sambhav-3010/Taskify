@@ -6,6 +6,10 @@ export async function createTask(taskData: ITask, userId: Types.ObjectId): Promi
   return await createRepo(taskData, userId);
 }
 
+export async function getTaskById(id: string, userId: Types.ObjectId): Promise<ITask | null> {
+  return await findByIdRepo(id, userId);
+}
+
 export async function getTasks(filters: FilterQuery<ITask>, page: number, limit: number, userId: Types.ObjectId): Promise<{ tasks: ITask[], totalPages: number, currentPage: number }> {
   const totalTasks = await countRepo(filters, userId);
   const tasks = await findRepo(filters, page, limit, userId);

@@ -17,6 +17,10 @@ export async function findById(id: string, userId: Types.ObjectId): Promise<IPro
   return await Project.findOne({ _id: id, userId: userId });
 }
 
+export async function update(id: string, projectData: Partial<IProject>, userId: Types.ObjectId): Promise<IProject | null> {
+  return await Project.findOneAndUpdate({ _id: id, userId: userId }, projectData, { new: true });
+}
+
 export async function deleteProject(id: string, userId: Types.ObjectId): Promise<IProject | null> {
   const deletedProject = await Project.findOneAndDelete({ _id: id, userId: userId });
   if (deletedProject) {
