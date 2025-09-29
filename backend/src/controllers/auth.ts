@@ -70,6 +70,7 @@ export async function logout(req: Request, res: Response) {
 export async function me(req: Request, res: Response) {
   const { token } = req.cookies;
   if (!token) {
+    console.log("No token");
     return res.status(201).json({ message: "No token present" });
   }
   const decoded = verifyJwt<{ id: string }>(token);
