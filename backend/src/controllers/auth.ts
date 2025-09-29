@@ -7,7 +7,7 @@ const COOKIE_NAME = process.env.COOKIE_NAME || "token";
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
+  sameSite: "none" as const,
   maxAge: 1000 * 60 * 60 * 24 * 7,
 };
 
@@ -61,7 +61,7 @@ export async function login(req: Request, res: Response) {
 export async function logout(req: Request, res: Response) {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "none",
     secure: process.env.NODE_ENV === "production",
   });
   return res.json({ message: "Logged out" });
@@ -69,9 +69,7 @@ export async function logout(req: Request, res: Response) {
 
 export async function me(req: Request, res: Response) {
   const { token } = req.cookies;
-  console.log(req.cookies);
   if (!token) {
-    console.log("No token");
     return res.status(201).json({ message: "No token present" });
   }
   const decoded = verifyJwt<{ id: string }>(token);

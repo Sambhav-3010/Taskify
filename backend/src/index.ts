@@ -30,21 +30,7 @@ app.use(
   })
 );
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "secret",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: false,
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24,
-    },
-  })
-);
-
 app.use(passport.initialize());
-app.use(passport.session());
 
 app.get("/", (_req: Request, res: Response) => {
   res.send("Project Management System Backend is running");
