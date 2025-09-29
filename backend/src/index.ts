@@ -22,6 +22,8 @@ app.use(
     origin: [
       process.env.FRONTEND_URL as string,
       process.env.BACKEND_URL as string,
+      "https://taskify-event.vercel.app",
+      "http://taskify-event.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
