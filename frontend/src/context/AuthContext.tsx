@@ -45,6 +45,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         );
         if (response.data?.user) {
           setUser(response.data.user);
+          console.log("User found:", response.data.user);
+          console.log(response.data);
         } else {
           setUser(null);
         }
