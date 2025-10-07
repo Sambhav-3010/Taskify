@@ -6,10 +6,8 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import mongoose from "mongoose";
 import passport from "./utils/passport";
-import session from "express-session";
 import projectRoutes from "./routes/project.routes";
 import taskRoutes from "./routes/task.routes";
-import eventRoutes from "./routes/event.routes";
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
@@ -39,7 +37,6 @@ app.use("/auth", authRoutes);
 app.use("/chats", chatRoutes);
 app.use("/projects", projectRoutes);
 app.use("/tasks", taskRoutes);
-app.use("/events", eventRoutes);
 
 async function start() {
   try {

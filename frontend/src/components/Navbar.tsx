@@ -76,9 +76,6 @@ const Navbar = () => {
                 <Link href="/tasks">
                   <Button variant="ghost" size="sm">Tasks</Button>
                 </Link>
-                <Link href="/events">
-                  <Button variant="ghost" size="sm">Events</Button>
-                </Link>
               </>
             )}
           </nav>
