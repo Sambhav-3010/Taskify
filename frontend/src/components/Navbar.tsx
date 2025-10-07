@@ -106,9 +106,6 @@ const Navbar = () => {
                 <Link href="/tasks">
                   <Button variant="ghost" size="sm" className="w-full justify-start">Tasks</Button>
                 </Link>
-                <Link href="/events">
-                  <Button variant="ghost" size="sm" className="w-full justify-start">Events</Button>
-                </Link>
               </>
             )}
           </div>
