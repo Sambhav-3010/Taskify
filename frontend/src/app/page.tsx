@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowRight, Calendar, Users, Zap, Github } from "lucide-react";
+import { ArrowRight, Calendar, FolderOpen, CheckSquare, Github } from "lucide-react";
 import Link from "next/link";
 import LandingPageSkeleton from "@/components/landing-page-skeleton";
 
@@ -24,15 +24,15 @@ export default function LandingPage() {
           <main className="container mx-auto px-4 py-16 flex-1 flex flex-col justify-center items-center">
             <div className="text-center mb-24 max-w-4xl">
               <h2 className="text-5xl md:text-7xl font-extrabold text-foreground mb-8 leading-tight">
-                Manage Events with
+                Organize Your Tasks
                 <span className="text-primary block md:inline-block">
                   {" "}
-                  AI Power
+                  With Ease
                 </span>
               </h2>
               <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto">
-                Create, organize, and collaborate on events seamlessly. Let AI
-                help you plan while you focus on what matters most.
+                Create projects, manage tasks, and track deadlines.
+                Export to Google Calendar and stay on top of your schedule.
               </p>
               {!user && (
                 <div className="flex flex-col sm:flex-row gap-6 justify-center">
@@ -60,42 +60,42 @@ export default function LandingPage() {
 
             {/* Features */}
             <div className="grid md:grid-cols-3 gap-12 mb-24 w-full max-w-6xl">
-              <Card className="p-6 text-center">
+              <Card className="p-6 text-center hover:shadow-lg transition-shadow">
                 <CardHeader className="flex flex-col items-center p-0 mb-4">
-                  <Zap className="h-10 w-10 text-primary mb-4" />
+                  <FolderOpen className="h-10 w-10 text-primary mb-4" />
                   <CardTitle className="text-xl font-bold">
-                    AI-Powered Creation
+                    Project Organization
                   </CardTitle>
                 </CardHeader>
                 <CardDescription className="text-base">
-                  Describe your event in natural language and let AI create the
-                  perfect plan with tasks and timeline.
+                  Group related tasks into projects. Keep everything organized
+                  and easy to find.
                 </CardDescription>
               </Card>
 
-              <Card className="p-6 text-center">
+              <Card className="p-6 text-center hover:shadow-lg transition-shadow">
                 <CardHeader className="flex flex-col items-center p-0 mb-4">
-                  <Users className="h-10 w-10 text-primary mb-4" />
+                  <CheckSquare className="h-10 w-10 text-primary mb-4" />
                   <CardTitle className="text-xl font-bold">
-                    Real-time Collaboration
+                    Task Management
                   </CardTitle>
                 </CardHeader>
                 <CardDescription className="text-base">
-                  See who’s online, track progress together, and collaborate
-                  seamlessly with your team in real-time.
+                  Create tasks with priorities, deadlines, and status tracking.
+                  Never miss a deadline again.
                 </CardDescription>
               </Card>
 
-              <Card className="p-6 text-center">
+              <Card className="p-6 text-center hover:shadow-lg transition-shadow">
                 <CardHeader className="flex flex-col items-center p-0 mb-4">
                   <Calendar className="h-10 w-10 text-primary mb-4" />
                   <CardTitle className="text-xl font-bold">
-                    Smart Organization
+                    Calendar Integration
                   </CardTitle>
                 </CardHeader>
                 <CardDescription className="text-base">
-                  Keep all your events organized with intelligent task
-                  management and progress tracking.
+                  View tasks on a calendar and export to Google Calendar with
+                  one click.
                 </CardDescription>
               </Card>
             </div>
@@ -104,11 +104,10 @@ export default function LandingPage() {
             {!user && (
               <div className="text-center bg-card border border-border rounded-lg p-12 w-full max-w-2xl shadow-xl">
                 <h3 className="text-3xl font-bold text-foreground mb-6">
-                  Ready to streamline your events?
+                  Ready to get organized?
                 </h3>
                 <p className="text-lg text-muted-foreground mb-8">
-                  Join thousands of teams already using Taskify to manage their
-                  events efficiently.
+                  Start managing your projects and tasks today. It&apos;s free!
                 </p>
                 <Link href="/auth/signup">
                   <Button size="lg" className="px-10 py-5 text-xl">
@@ -118,55 +117,63 @@ export default function LandingPage() {
                 </Link>
               </div>
             )}
+
             {/* How to Use Section */}
             <div className="w-full max-w-6xl my-24 text-center">
               <h3 className="text-4xl font-bold text-foreground mb-12">
-                How to Use Taskify
+                How It Works
               </h3>
               <div className="grid md:grid-cols-3 gap-12">
-                <Card className="p-6 text-center">
+                <Card className="p-6 text-center hover:shadow-lg transition-shadow">
                   <CardHeader className="flex flex-col items-center p-0 mb-4">
-                    <Zap className="h-10 w-10 text-primary mb-4" />
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl mb-4">
+                      1
+                    </div>
                     <CardTitle className="text-xl font-bold">
-                      1. Create Projects
+                      Create Projects
                     </CardTitle>
                   </CardHeader>
                   <CardDescription className="text-base">
-                    Start by creating a new project for your event. Give it a
-                    name and a brief description.
+                    Start by creating a new project to organize your work.
+                    Give it a name and description.
                   </CardDescription>
                 </Card>
-                <Card className="p-6 text-center">
+                <Card className="p-6 text-center hover:shadow-lg transition-shadow">
                   <CardHeader className="flex flex-col items-center p-0 mb-4">
-                    <Users className="h-10 w-10 text-primary mb-4" />
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl mb-4">
+                      2
+                    </div>
                     <CardTitle className="text-xl font-bold">
-                      2. Add Tasks & Events
+                      Add Tasks
                     </CardTitle>
                   </CardHeader>
                   <CardDescription className="text-base">
-                    Break down your project into manageable tasks and schedule
-                    important events.
+                    Break down your project into tasks. Set priorities
+                    and deadlines to stay on track.
                   </CardDescription>
                 </Card>
-                <Card className="p-6 text-center">
+                <Card className="p-6 text-center hover:shadow-lg transition-shadow">
                   <CardHeader className="flex flex-col items-center p-0 mb-4">
-                    <Calendar className="h-10 w-10 text-primary mb-4" />
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl mb-4">
+                      3
+                    </div>
                     <CardTitle className="text-xl font-bold">
-                      3. Track Progress
+                      Track & Export
                     </CardTitle>
                   </CardHeader>
                   <CardDescription className="text-base">
-                    Monitor the status of your tasks and events, and collaborate
-                    with your team in real-time.
+                    Track progress on the calendar view and export tasks
+                    to Google Calendar.
                   </CardDescription>
                 </Card>
               </div>
             </div>
-            <Card className="p-6 text-center max-w-2xl w-full">
+
+            <Card className="p-6 text-center max-w-2xl w-full hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-col items-center p-0 mb-4">
                 <Calendar className="h-10 w-10 text-primary mb-4" />
                 <CardTitle className="text-xl font-bold">
-                  Open Dashboard to Get Started
+                  {user ? "Go to Dashboard" : "Get Started Now"}
                 </CardTitle>
               </CardHeader>
               <CardDescription className="text-base flex justify-center w-full">
@@ -176,7 +183,7 @@ export default function LandingPage() {
                       size="lg"
                       className="px-8 py-4 text-lg w-full sm:w-auto"
                     >
-                      Go to Dashboard
+                      Open Dashboard
                       <ArrowRight className="ml-3 h-5 w-5" />
                     </Button>
                   </Link>
@@ -186,7 +193,7 @@ export default function LandingPage() {
                       size="lg"
                       className="px-8 py-4 text-lg"
                     >
-                      Sign Up to Get Started
+                      Sign Up Free
                       <ArrowRight className="ml-3 h-5 w-5" />
                     </Button>
                   </Link>

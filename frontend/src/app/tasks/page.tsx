@@ -7,7 +7,7 @@ import { Task, Project } from '@/lib/models';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Plus, Pencil, Trash2 } from 'lucide-react';
+import { CalendarDays, Plus, Pencil, Trash2, Download, ExternalLink, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GET_TASKS, DELETE_TASK } from '@/graphql';
+import { generateICS, downloadICS, generateGoogleCalendarURL, generateICSBatch, CalendarTask } from '@/lib/calendar-utils';
+import { isPast, isToday } from 'date-fns';
 
 interface GraphQLTask {
   id: string;
@@ -54,6 +56,7 @@ export default function TasksPage() {
     priority: t.priority as Task['priority'],
     deadline: t.deadline,
     projectId: t.project ? { _id: t.project.id, name: t.project.name } as unknown as Project : t.projectId,
+    projectName: t.project?.name,
     userId: t.userId,
   })) || [];
 
@@ -84,6 +87,63 @@ export default function TasksPage() {
     }
   };
 
+  const handleAddToGoogleCalendar = (task: Task) => {
+    const calendarTask: CalendarTask = {
+      id: task._id,
+      title: task.title,
+      deadline: new Date(task.deadline),
+      status: task.status,
+      priority: task.priority,
+      projectName: typeof task.projectId === 'object' && task.projectId
+        ? (task.projectId as { name: string }).name
+        : undefined,
+    };
+
+    const url = generateGoogleCalendarURL(calendarTask);
+    window.open(url, '_blank');
+  };
+
+  const handleDownloadICS = (task: Task) => {
+    const calendarTask: CalendarTask = {
+      id: task._id,
+      title: task.title,
+      deadline: new Date(task.deadline),
+      status: task.status,
+      priority: task.priority,
+      projectName: typeof task.projectId === 'object' && task.projectId
+        ? (task.projectId as { name: string }).name
+        : undefined,
+    };
+
+    const icsContent = generateICS(calendarTask);
+    downloadICS(icsContent, `task-${task._id}.ics`);
+    toast.success('Calendar file downloaded!');
+  };
+
+  const handleExportAll = () => {
+    if (tasks.length === 0) {
+      toast.error('No tasks to export');
+      return;
+    }
+
+    const calendarTasks: CalendarTask[] = tasks
+      .filter(task => task.deadline)
+      .map(task => ({
+        id: task._id,
+        title: task.title,
+        deadline: new Date(task.deadline),
+        status: task.status,
+        priority: task.priority,
+        projectName: typeof task.projectId === 'object' && task.projectId
+          ? (task.projectId as { name: string }).name
+          : undefined,
+      }));
+
+    const icsContent = generateICSBatch(calendarTasks);
+    downloadICS(icsContent, 'taskify-tasks.ics');
+    toast.success(`Exported ${calendarTasks.length} tasks to calendar file`);
+  };
+
   useEffect(() => {
     if (authLoading) return;
 
@@ -104,6 +164,24 @@ export default function TasksPage() {
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return 'text-red-600 dark:text-red-400';
+      case 'medium':
+        return 'text-amber-600 dark:text-amber-400';
+      case 'low':
+        return 'text-green-600 dark:text-green-400';
+      default:
+        return 'text-muted-foreground';
+    }
+  };
+
+  const isTaskOverdue = (task: Task) => {
+    const deadline = new Date(task.deadline);
+    return isPast(deadline) && !isToday(deadline) && task.status !== 'done';
   };
 
   if (loading || authLoading) {
@@ -143,14 +221,23 @@ export default function TasksPage() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">Your Tasks</h1>
-        <Link href="/tasks/new">
-          <Button className="flex items-center space-x-2">
-            <Plus className="h-5 w-5" />
-            <span>Add New Task</span>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Your Tasks</h1>
+          <p className="text-muted-foreground">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportAll} disabled={tasks.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            Export All
           </Button>
-        </Link>
+          <Link href="/tasks/new">
+            <Button className="flex items-center space-x-2">
+              <Plus className="h-5 w-5" />
+              <span>Add New Task</span>
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -159,13 +246,66 @@ export default function TasksPage() {
             No tasks found. <Link href="/tasks/new" className="text-primary hover:underline">Create one!</Link>
           </p>
         ) : (
-          tasks.map((task) => (
-            <Card key={task._id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg mb-2">{task.title}</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
+          tasks.map((task) => {
+            const overdue = isTaskOverdue(task);
+            return (
+              <Card
+                key={task._id}
+                className={`hover:shadow-md transition-shadow ${overdue ? 'border-red-300 dark:border-red-800' : ''
+                  }`}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      {overdue && <AlertTriangle className="h-4 w-4 text-red-500" />}
+                      <CardTitle className="text-lg mb-2">{task.title}</CardTitle>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
+                    </div>
+                  </div>
+                  <CardDescription className="flex items-center space-x-2 mt-2">
+                    <CalendarDays className="h-4 w-4" />
+                    <span className={overdue ? 'text-red-500 font-medium' : ''}>
+                      Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A'}
+                    </span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className={`mt-4 font-medium ${getPriorityColor(task.priority)}`}>
+                    Priority: {task.priority}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Project: {task.projectId
+                      ? (typeof task.projectId === 'string'
+                        ? task.projectId
+                        : (typeof task.projectId === 'object' && task.projectId !== null && 'name' in task.projectId
+                          ? (task.projectId as { name: string }).name
+                          : (task.projectId as { _id: string })._id))
+                      : 'N/A'}
+                  </p>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-1 mt-4 pt-4 border-t border-border">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleAddToGoogleCalendar(task)}
+                      title="Add to Google Calendar"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      Add to Calendar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDownloadICS(task)}
+                      title="Download ICS file"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="sr-only">Download ICS</span>
+                    </Button>
+                    <div className="flex-1" />
                     <Button variant="ghost" size="icon" onClick={() => router.push(`/tasks/edit/${task._id}`)}>
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">Edit Task</span>
@@ -175,26 +315,10 @@ export default function TasksPage() {
                       <span className="sr-only">Delete Task</span>
                     </Button>
                   </div>
-                </div>
-                <CardDescription className="flex items-center space-x-2 mt-2">
-                  <CalendarDays className="h-4 w-4" />
-                  <span>Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A'}</span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mt-4">Priority: {task.priority}</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Project: {task.projectId
-                    ? (typeof task.projectId === 'string'
-                      ? task.projectId
-                      : (typeof task.projectId === 'object' && task.projectId !== null && 'name' in task.projectId
-                        ? (task.projectId as { name: string }).name
-                        : (task.projectId as { _id: string })._id))
-                    : 'N/A'}
-                </p>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
 

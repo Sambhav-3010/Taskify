@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { LogOut, User2Icon, MenuIcon, XIcon } from "lucide-react"; // Added MenuIcon and XIcon
+import { LogOut, User2Icon, MenuIcon, XIcon, Calendar } from "lucide-react"; // Added MenuIcon and XIcon
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,12 @@ const Navbar = () => {
                 <Link href="/tasks">
                   <Button variant="ghost" size="sm">Tasks</Button>
                 </Link>
+                <Link href="/calendar">
+                  <Button variant="ghost" size="sm">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    Calendar
+                  </Button>
+                </Link>
               </>
             )}
           </nav>
@@ -105,6 +111,12 @@ const Navbar = () => {
                 </Link>
                 <Link href="/tasks">
                   <Button variant="ghost" size="sm" className="w-full justify-start">Tasks</Button>
+                </Link>
+                <Link href="/calendar">
+                  <Button variant="ghost" size="sm" className="w-full justify-start">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Calendar
+                  </Button>
                 </Link>
               </>
             )}
