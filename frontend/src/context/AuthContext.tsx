@@ -2,7 +2,8 @@
 
 import type React from "react";
 import { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+import { useQuery, useMutation } from "@apollo/client";
+import { ME_QUERY, LOGOUT_MUTATION } from "@/graphql";
 
 export interface BackendUser {
   id: string;
@@ -14,14 +15,7 @@ interface AuthContextType {
   user: BackendUser | null;
   loading: boolean;
   setUser: (user: BackendUser | null) => void;
-  login?: (email: string, password: string) => Promise<void>;
-  signup?: (
-    email: string,
-    password: string,
-    displayName: string
-  ) => Promise<void>;
-  logout?: () => Promise<void>;
-  loginWithGoogle?: (googleToken: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -34,36 +28,39 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<BackendUser | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  const { data, loading } = useQuery(ME_QUERY, {
+    fetchPolicy: "network-only",
+  });
+
+  const [logoutMutation] = useMutation(LOGOUT_MUTATION);
 
   useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const response = await axios.get(
-          process.env.NEXT_PUBLIC_BACKEND_URL + "/auth/me",
-          { withCredentials: true }
-        );
-        if (response.data?.user) {
-          setUser(response.data.user);
-          console.log("User found:", response.data.user);
-          console.log(response.data);
-        } else {
-          setUser(null);
-        }
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (data?.me) {
+      setUser({
+        id: data.me.id,
+        email: data.me.email,
+        name: data.me.name,
+      });
+    } else if (!loading) {
+      setUser(null);
+    }
+  }, [data, loading]);
 
-    fetchCurrentUser();
-  }, []);
+  const logout = async () => {
+    try {
+      await logoutMutation();
+      setUser(null);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const value: AuthContextType = {
     user,
     loading,
     setUser,
+    logout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

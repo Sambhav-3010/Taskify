@@ -5,6 +5,7 @@ import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useMutation } from "@apollo/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,45 +20,43 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LogIn, Mail, Lock } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-import axios from "axios";
+import { LOGIN_MUTATION } from "@/graphql";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { setUser } = useAuth()
+  const { setUser } = useAuth();
+
+  const [loginMutation, { loading }] = useMutation(LOGIN_MUTATION);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
-    console.log(
-      "Submitting login for:",
-      process.env.NEXT_PUBLIC_BACKEND_URL + "/auth/login"
-    );
+
     try {
-      const response = await axios.post(
-        process.env.NEXT_PUBLIC_BACKEND_URL + "/auth/login",
-        { email, password },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
-      setUser(response.data.user);
-      router.push("/dashboard");
+      const { data } = await loginMutation({
+        variables: {
+          input: { email, password },
+        },
+      });
+
+      if (data?.login?.user) {
+        setUser({
+          id: data.login.user.id,
+          email: data.login.user.email,
+          name: data.login.user.name,
+        });
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
         setError("Failed to log in");
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -126,7 +125,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign in"}
             </Button>
           </form>

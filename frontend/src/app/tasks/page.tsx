@@ -1,11 +1,9 @@
 'use client';
 
-'use client';
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
-import { Task } from '@/lib/models';
+import { useQuery, useMutation } from '@apollo/client';
+import { Task, Project } from '@/lib/models';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import { Badge } from '@/components/ui/badge';
@@ -24,27 +22,40 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { GET_TASKS, DELETE_TASK } from '@/graphql';
+
+interface GraphQLTask {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  deadline: string;
+  projectId: string | null;
+  project?: { id: string; name: string } | null;
+  userId: string;
+}
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
 
-  const fetchTasks = async () => {
-    try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks`, { withCredentials: true });
-      setTasks(response.data.tasks.map((t: Task) => JSON.parse(JSON.stringify(t))));
-    } catch (err) {
-      console.error('Failed to fetch tasks:', err);
-      setError('Failed to load tasks.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, loading, refetch } = useQuery(GET_TASKS, {
+    skip: !user,
+  });
+
+  const [deleteTaskMutation] = useMutation(DELETE_TASK);
+
+  const tasks: Task[] = data?.tasks?.tasks?.map((t: GraphQLTask) => ({
+    _id: t.id,
+    title: t.title,
+    status: t.status as Task['status'],
+    priority: t.priority as Task['priority'],
+    deadline: t.deadline,
+    projectId: t.project ? { _id: t.project.id, name: t.project.name } as unknown as Project : t.projectId,
+    userId: t.userId,
+  })) || [];
 
   const handleDeleteTask = (taskId: string) => {
     setTaskToDelete(taskId);
@@ -54,9 +65,15 @@ export default function TasksPage() {
   const confirmDeleteTask = async () => {
     if (taskToDelete) {
       try {
-        await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks/${taskToDelete}`, { withCredentials: true });
-        toast.success('Task deleted successfully!');
-        fetchTasks(); // Refresh the list
+        const { data: deleteData } = await deleteTaskMutation({
+          variables: { id: taskToDelete },
+        });
+        if (deleteData?.deleteTask?.success) {
+          toast.success('Task deleted successfully!');
+          refetch();
+        } else {
+          toast.error('Failed to delete task.');
+        }
       } catch (err) {
         console.error('Failed to delete task:', err);
         toast.error('Failed to delete task.');
@@ -74,7 +91,6 @@ export default function TasksPage() {
       router.push('/auth/login');
       return;
     }
-    fetchTasks();
   }, [user, authLoading, router]);
 
   const getStatusColor = (status: string) => {
@@ -125,10 +141,6 @@ export default function TasksPage() {
     );
   }
 
-  if (error) {
-    return <div className="container mx-auto p-4 text-red-500">Error: {error}</div>;
-  }
-
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="flex justify-between items-center mb-8">
@@ -174,10 +186,10 @@ export default function TasksPage() {
                 <p className="text-sm text-muted-foreground mt-2">
                   Project: {task.projectId
                     ? (typeof task.projectId === 'string'
-                        ? task.projectId
-                        : (typeof task.projectId === 'object' && task.projectId !== null && 'name' in task.projectId
-                            ? (task.projectId as { name: string }).name
-                            : (task.projectId as { _id: string })._id))
+                      ? task.projectId
+                      : (typeof task.projectId === 'object' && task.projectId !== null && 'name' in task.projectId
+                        ? (task.projectId as { name: string }).name
+                        : (task.projectId as { _id: string })._id))
                     : 'N/A'}
                 </p>
               </CardContent>

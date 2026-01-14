@@ -1,17 +1,15 @@
 'use client';
 
-'use client';
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
-import { Project, Task } from '@/lib/models'; // Import Task model
+import { useQuery, useMutation } from '@apollo/client';
+import { Project, Task } from '@/lib/models';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
-import { Plus, CalendarDays, Pencil, Trash2 } from 'lucide-react'; // Import CalendarDays icon
+import { Plus, CalendarDays, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge'; // Import Badge component
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -24,32 +22,62 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { GET_PROJECTS, GET_TASKS, DELETE_PROJECT } from '@/graphql';
+
+interface GraphQLProject {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  userId: string;
+}
+
+interface GraphQLTask {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  deadline: string;
+  projectId: string | null;
+  project?: { id: string; name: string } | null;
+  userId: string;
+}
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]); // State for tasks
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
 
-  const fetchProjectsAndTasks = async () => {
-    try {
-      const [projectsResponse, tasksResponse] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`, { withCredentials: true }),
-        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks`, { withCredentials: true }),
-      ]);
-      setProjects(projectsResponse.data.map((p: Project) => JSON.parse(JSON.stringify(p))));
-      setTasks(tasksResponse.data.tasks.map((t: Task) => JSON.parse(JSON.stringify(t))));
-    } catch (err) {
-      console.error('Failed to fetch projects or tasks:', err);
-      setError('Failed to load projects and tasks.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: projectsData, loading: projectsLoading, refetch: refetchProjects } = useQuery(GET_PROJECTS, {
+    skip: !user,
+  });
+
+  const { data: tasksData, loading: tasksLoading, refetch: refetchTasks } = useQuery(GET_TASKS, {
+    skip: !user,
+  });
+
+  const [deleteProjectMutation] = useMutation(DELETE_PROJECT);
+
+  const projects: Project[] = projectsData?.projects?.map((p: GraphQLProject) => ({
+    _id: p.id,
+    name: p.name,
+    description: p.description,
+    createdAt: p.createdAt,
+    userId: p.userId,
+  })) || [];
+
+  const tasks: Task[] = tasksData?.tasks?.tasks?.map((t: GraphQLTask) => ({
+    _id: t.id,
+    title: t.title,
+    status: t.status as Task['status'],
+    priority: t.priority as Task['priority'],
+    deadline: t.deadline,
+    projectId: t.projectId || t.project?.id,
+    userId: t.userId,
+  })) || [];
+
+  const loading = projectsLoading || tasksLoading;
 
   const handleDeleteProject = (projectId: string) => {
     setProjectToDelete(projectId);
@@ -59,9 +87,16 @@ export default function ProjectsPage() {
   const confirmDeleteProject = async () => {
     if (projectToDelete) {
       try {
-        await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/${projectToDelete}`, { withCredentials: true });
-        toast.success('Project and associated tasks deleted successfully!');
-        fetchProjectsAndTasks(); // Refresh the list
+        const { data } = await deleteProjectMutation({
+          variables: { id: projectToDelete },
+        });
+        if (data?.deleteProject?.success) {
+          toast.success('Project and associated tasks deleted successfully!');
+          refetchProjects();
+          refetchTasks();
+        } else {
+          toast.error('Failed to delete project.');
+        }
       } catch (err) {
         console.error('Failed to delete project:', err);
         toast.error('Failed to delete project.');
@@ -79,7 +114,6 @@ export default function ProjectsPage() {
       router.push('/auth/login');
       return;
     }
-    fetchProjectsAndTasks();
   }, [user, authLoading, router]);
 
   const getStatusColor = (status: string) => {
@@ -130,14 +164,6 @@ export default function ProjectsPage() {
                     <Skeleton className="h-3 w-2/3 mt-1" />
                     <Skeleton className="h-3 w-1/3 mt-2" />
                   </Card>
-                  <Card className="p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-start justify-between">
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-4 w-16" />
-                    </div>
-                    <Skeleton className="h-3 w-2/3 mt-1" />
-                    <Skeleton className="h-3 w-1/3 mt-2" />
-                  </Card>
                 </div>
               </CardContent>
             </Card>
@@ -145,10 +171,6 @@ export default function ProjectsPage() {
         </div>
       </div>
     );
-  }
-
-  if (error) {
-    return <div className="container mx-auto p-4 text-red-500">Error: {error}</div>;
   }
 
   return (
@@ -195,29 +217,19 @@ export default function ProjectsPage() {
               <CardContent>
                 <h3 className="text-md font-semibold mb-2 mt-4">Tasks:</h3>
                 {tasks.filter(task => {
-                  let taskId: string | undefined;
-                  if (task.projectId) {
-                    if (typeof task.projectId === 'object') {
-                      taskId = task.projectId._id;
-                    } else {
-                      taskId = task.projectId;
-                    }
-                  }
-                  return taskId === project._id;
+                  const taskProjectId = typeof task.projectId === 'object' && task.projectId
+                    ? (task.projectId as Project)._id
+                    : task.projectId;
+                  return taskProjectId === project._id;
                 }).length === 0 ? (
                   <p className="text-muted-foreground text-sm">No tasks for this project.</p>
                 ) : (
                   <div className="space-y-2">
                     {tasks.filter(task => {
-                      let taskId: string | undefined;
-                      if (task.projectId) {
-                        if (typeof task.projectId === 'object') {
-                          taskId = task.projectId._id;
-                        } else {
-                          taskId = task.projectId;
-                        }
-                      }
-                      return taskId === project._id;
+                      const taskProjectId = typeof task.projectId === 'object' && task.projectId
+                        ? (task.projectId as Project)._id
+                        : task.projectId;
+                      return taskProjectId === project._id;
                     }).map((task) => (
                       <Card key={task._id} className="p-3 border border-gray-200 dark:border-gray-700">
                         <div className="flex items-start justify-between">

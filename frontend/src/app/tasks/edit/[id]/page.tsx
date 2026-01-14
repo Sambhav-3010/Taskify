@@ -2,33 +2,68 @@
 
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
-import { Task, Project } from '@/lib/models';
+import { useQuery, useMutation } from '@apollo/client';
+import { Project } from '@/lib/models';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomSelect, CustomSelectItem } from '@/components/CustomSelect';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { GET_TASK, GET_PROJECTS, UPDATE_TASK } from '@/graphql';
+import { toast } from 'sonner';
+
+interface GraphQLProject {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  userId: string;
+}
 
 export default function EditTaskPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [task, setTask] = useState<Task | null>(null);
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const [deadline, setDeadline] = useState('');
   const [priority, setPriority] = useState('');
   const [status, setStatus] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [projectId, setProjectId] = useState('no-project-selected');
   const [error, setError] = useState<string | null>(null);
+
+  const { data: taskData, loading: taskLoading } = useQuery(GET_TASK, {
+    variables: { id },
+    skip: !user,
+    onCompleted: (data) => {
+      if (data?.task) {
+        setTitle(data.task.title);
+        setDeadline(data.task.deadline ? new Date(data.task.deadline).toISOString().split('T')[0] : '');
+        setPriority(data.task.priority || 'medium');
+        setStatus(data.task.status || 'todo');
+        setProjectId(data.task.projectId || 'no-project-selected');
+      }
+    },
+  });
+
+  const { data: projectsData, loading: projectsLoading } = useQuery(GET_PROJECTS, {
+    skip: !user,
+  });
+
+  const [updateTaskMutation, { loading: updating }] = useMutation(UPDATE_TASK);
+
+  const projects: Project[] = projectsData?.projects?.map((p: GraphQLProject) => ({
+    _id: p.id,
+    name: p.name,
+    description: p.description,
+    createdAt: p.createdAt,
+    userId: p.userId,
+  })) || [];
+
+  const loading = taskLoading || projectsLoading;
 
   useEffect(() => {
     if (authLoading) return;
@@ -37,50 +72,35 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
       router.push('/auth/login');
       return;
     }
-
-    const fetchTaskAndProjects = async () => {
-      try {
-        const [taskResponse, projectsResponse] = await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks/${id}`, { withCredentials: true }),
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`, { withCredentials: true }),
-        ]);
-        const fetchedTask = taskResponse.data.task;
-        setTask(fetchedTask);
-        setTitle(fetchedTask.title);
-        setDescription(fetchedTask.description || '');
-        setDeadline(fetchedTask.deadline ? new Date(fetchedTask.deadline).toISOString().split('T')[0] : '');
-        setPriority(fetchedTask.priority || '');
-        setStatus(fetchedTask.status || '');
-        setProjectId(fetchedTask.projectId?._id || fetchedTask.projectId || '');
-
-        setProjects(projectsResponse.data || []); // projectsResponse.data is directly an array of projects
-      } catch (err) {
-        console.error('Failed to fetch task or projects:', err);
-        setError('Failed to load task or projects.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTaskAndProjects();
-  }, [id, user, authLoading, router]);
+  }, [user, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks/${id}`, {
-        title,
-        description,
-        deadline,
-        priority,
-        status,
-        projectId: projectId || null,
-      }, { withCredentials: true });
-      router.push('/tasks');
+      const { data } = await updateTaskMutation({
+        variables: {
+          id,
+          input: {
+            title,
+            deadline,
+            priority,
+            status,
+            projectId: projectId === 'no-project-selected' ? null : projectId,
+          },
+        },
+      });
+      if (data?.updateTask) {
+        toast.success('Task updated successfully!');
+        router.push('/tasks');
+      }
     } catch (err) {
       console.error('Failed to update task:', err);
-      setError('Failed to update task.');
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to update task.');
+      }
     }
   };
 
@@ -99,30 +119,12 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
           </CardHeader>
           <CardContent className="pt-4">
             <div className="space-y-6">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-20 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-1/4" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
               <Skeleton className="h-10 w-full" />
             </div>
           </CardContent>
@@ -131,11 +133,7 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
     );
   }
 
-  if (error) {
-    return <div className="container mx-auto p-4 text-red-500">Error: {error}</div>;
-  }
-
-  if (!task) {
+  if (!taskData?.task) {
     return <div className="container mx-auto p-4">Task not found.</div>;
   }
 
@@ -150,8 +148,6 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
     { value: 'in-progress', label: 'In Progress' },
     { value: 'done', label: 'Done' },
   ];
-
-  const projectOptions = projects.map(p => ({ value: p._id, label: p.name }));
 
   return (
     <div className="min-h-screen bg-background p-4 flex items-start justify-center pt-8">
@@ -177,14 +173,7 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                disabled={updating}
               />
             </div>
             <div className="space-y-2">
@@ -194,6 +183,7 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
                 type="date"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
+                disabled={updating}
               />
             </div>
             <div className="space-y-2">
@@ -202,6 +192,7 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
                 value={priority}
                 onValueChange={setPriority}
                 placeholder="Select priority"
+                disabled={updating}
               >
                 {priorityOptions.map((option) => (
                   <CustomSelectItem key={option.value} value={option.value}>
@@ -216,6 +207,7 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
                 value={status}
                 onValueChange={setStatus}
                 placeholder="Select status"
+                disabled={updating}
               >
                 {statusOptions.map((option) => (
                   <CustomSelectItem key={option.value} value={option.value}>
@@ -230,16 +222,20 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
                 value={projectId}
                 onValueChange={setProjectId}
                 placeholder="Select project (optional)"
+                disabled={updating}
               >
-                {projectOptions.map((option) => (
-                  <CustomSelectItem key={option.value} value={option.value}>
-                    {option.label}
+                <CustomSelectItem value="no-project-selected">No Project</CustomSelectItem>
+                {projects.map((project) => (
+                  <CustomSelectItem key={project._id} value={project._id}>
+                    {project.name}
                   </CustomSelectItem>
                 ))}
               </CustomSelect>
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
-            <Button type="submit" className="w-full">Update Task</Button>
+            <Button type="submit" className="w-full" disabled={updating}>
+              {updating ? 'Updating...' : 'Update Task'}
+            </Button>
           </form>
         </CardContent>
       </Card>

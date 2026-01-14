@@ -5,6 +5,7 @@ import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useMutation } from "@apollo/client";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserPlus, Mail, Lock, User } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-import axios from "axios";
+import { SIGNUP_MUTATION } from "@/graphql";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -28,41 +29,41 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const { setUser } = useAuth();
   const router = useRouter();
+
+  const [signupMutation, { loading }] = useMutation(SIGNUP_MUTATION);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
-    console.log(
-      "Submitting login for:",
-      process.env.NEXT_PUBLIC_BACKEND_URL + "/auth/login"
-    );
-    try {
-      const response = await axios.post(
-        process.env.NEXT_PUBLIC_BACKEND_URL + "/auth/signup",
-        { email, password, name },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
 
-      console.log("Login response:", response.data);
-      setUser(response.data.user);
-      router.push("/dashboard");
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      const { data } = await signupMutation({
+        variables: {
+          input: { email, password, name },
+        },
+      });
+
+      if (data?.signup?.user) {
+        setUser({
+          id: data.signup.user.id,
+          email: data.signup.user.email,
+          name: data.signup.user.name,
+        });
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Failed to log in");
+        setError("Failed to create account");
       }
-    } finally {
-      setLoading(false);
     }
   };
 

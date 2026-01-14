@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { useQuery, useMutation } from '@apollo/client';
 import { Project } from '@/lib/models';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,32 +14,41 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { GET_PROJECTS, CREATE_TASK } from '@/graphql';
+
+interface GraphQLProject {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  userId: string;
+}
 
 export default function NewTaskPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
-
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState('todo');
   const [priority, setPriority] = useState('medium');
   const [deadline, setDeadline] = useState('');
   const [projectId, setProjectId] = useState('no-project-selected');
-  const [creatingTask, setCreatingTask] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
 
-  const fetchProjects = async () => {
-    try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`, { withCredentials: true });
-      setProjects(response.data);
-    } catch (err) {
-      console.error('Failed to fetch projects:', err);
-      setError('Failed to load projects.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: projectsData, loading: projectsLoading } = useQuery(GET_PROJECTS, {
+    skip: !user,
+  });
+
+  const [createTaskMutation, { loading: creatingTask }] = useMutation(CREATE_TASK);
+
+  const projects: Project[] = projectsData?.projects?.map((p: GraphQLProject) => ({
+    _id: p.id,
+    name: p.name,
+    description: p.description,
+    createdAt: p.createdAt,
+    userId: p.userId,
+  })) || [];
+
+  const loading = projectsLoading;
 
   useEffect(() => {
     if (authLoading) return;
@@ -48,34 +57,38 @@ export default function NewTaskPage() {
       router.push('/auth/login');
       return;
     }
-    fetchProjects();
   }, [user, authLoading, router]);
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCreatingTask(true);
     setError(null);
     try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/tasks`,
-        { title, status, priority, deadline, projectId: projectId === "no-project-selected" ? undefined : projectId },
-        { withCredentials: true }
-      );
-      toast.success('Task created successfully!');
-      setTitle('');
-      setStatus('todo');
-      setPriority('medium');
-      setDeadline('');
-      setProjectId('no-project-selected');
-      router.push('/tasks'); // Redirect to tasks list after creation
+      const { data } = await createTaskMutation({
+        variables: {
+          input: {
+            title,
+            status,
+            priority,
+            deadline,
+            projectId: projectId === "no-project-selected" ? null : projectId,
+          },
+        },
+      });
+      if (data?.createTask) {
+        toast.success('Task created successfully!');
+        setTitle('');
+        setStatus('todo');
+        setPriority('medium');
+        setDeadline('');
+        setProjectId('no-project-selected');
+        router.push('/tasks');
+      }
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Failed to create task.");
+      if (err instanceof Error) {
+        setError(err.message);
       } else {
         setError("Failed to create task.");
       }
-    } finally {
-      setCreatingTask(false);
     }
   };
 
@@ -94,26 +107,12 @@ export default function NewTaskPage() {
           </CardHeader>
           <CardContent className="pt-4">
             <div className="space-y-6">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-1/4" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
               <Skeleton className="h-10 w-full" />
             </div>
           </CardContent>

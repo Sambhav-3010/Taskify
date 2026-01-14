@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { useMutation } from '@apollo/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,14 +13,16 @@ import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CREATE_PROJECT } from '@/graphql';
 
 export default function NewProjectPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [creatingProject, setCreatingProject] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  const [createProjectMutation, { loading: creatingProject }] = useMutation(CREATE_PROJECT);
 
   useEffect(() => {
     if (authLoading) return;
@@ -33,26 +35,25 @@ export default function NewProjectPage() {
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCreatingProject(true);
     setError(null);
     try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`,
-        { name, description },
-        { withCredentials: true }
-      );
-      toast.success('Project created successfully!');
-      setName('');
-      setDescription('');
-      router.push('/projects'); // Redirect to projects list after creation
+      const { data } = await createProjectMutation({
+        variables: {
+          input: { name, description },
+        },
+      });
+      if (data?.createProject) {
+        toast.success('Project created successfully!');
+        setName('');
+        setDescription('');
+        router.push('/projects');
+      }
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Failed to create project.");
+      if (err instanceof Error) {
+        setError(err.message);
       } else {
         setError("Failed to create project.");
       }
-    } finally {
-      setCreatingProject(false);
     }
   };
 

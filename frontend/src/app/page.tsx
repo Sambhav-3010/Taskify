@@ -112,7 +112,7 @@ export default function LandingPage() {
                 </p>
                 <Link href="/auth/signup">
                   <Button size="lg" className="px-10 py-5 text-xl">
-                    Start Your Free Trial
+                    Start Using Taskify
                     <ArrowRight className="ml-3 h-5 w-5" />
                   </Button>
                 </Link>
@@ -169,29 +169,29 @@ export default function LandingPage() {
                   Open Dashboard to Get Started
                 </CardTitle>
               </CardHeader>
-                <CardDescription className="text-base flex justify-center w-full">
+              <CardDescription className="text-base flex justify-center w-full">
                 {user ? (
                   <Link href="/dashboard" className="">
-                  <Button
-                    size="lg"
-                    className="px-8 py-4 text-lg w-full sm:w-auto"
-                  >
-                    Go to Dashboard
-                    <ArrowRight className="ml-3 h-5 w-5" />
-                  </Button>
+                    <Button
+                      size="lg"
+                      className="px-8 py-4 text-lg w-full sm:w-auto"
+                    >
+                      Go to Dashboard
+                      <ArrowRight className="ml-3 h-5 w-5" />
+                    </Button>
                   </Link>
                 ) : (
                   <Link href="/auth/signup" className="">
-                  <Button
-                    size="lg"
-                    className="px-8 py-4 text-lg"
-                  >
-                    Sign Up to Get Started
-                    <ArrowRight className="ml-3 h-5 w-5" />
-                  </Button>
+                    <Button
+                      size="lg"
+                      className="px-8 py-4 text-lg"
+                    >
+                      Sign Up to Get Started
+                      <ArrowRight className="ml-3 h-5 w-5" />
+                    </Button>
                   </Link>
                 )}
-                </CardDescription>
+              </CardDescription>
             </Card>
           </main>
           <footer className="w-full bg-card border-t border-border py-4 text-center text-muted-foreground">

@@ -2,8 +2,7 @@
 
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
-import { Project } from '@/lib/models';
+import { useQuery, useMutation } from '@apollo/client';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,16 +12,29 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { GET_PROJECT, UPDATE_PROJECT } from '@/graphql';
+import { toast } from 'sonner';
 
 export default function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [project, setProject] = useState<Project | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { data, loading } = useQuery(GET_PROJECT, {
+    variables: { id },
+    skip: !user,
+    onCompleted: (data) => {
+      if (data?.project) {
+        setName(data.project.name);
+        setDescription(data.project.description || '');
+      }
+    },
+  });
+
+  const [updateProjectMutation, { loading: updating }] = useMutation(UPDATE_PROJECT);
 
   useEffect(() => {
     if (authLoading) return;
@@ -31,37 +43,29 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
       router.push('/auth/login');
       return;
     }
-
-    const fetchProject = async () => {
-      try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/${id}`, { withCredentials: true });
-        const fetchedProject = response.data;
-        setProject(fetchedProject);
-        setName(fetchedProject.name);
-        setDescription(fetchedProject.description || '');
-      } catch (err) {
-        console.error('Failed to fetch project:', err);
-        setError('Failed to load project.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProject();
-  }, [id, user, authLoading, router]);
+  }, [user, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/${id}`, {
-        name,
-        description,
-      }, { withCredentials: true });
-      router.push('/projects');
+      const { data: updateData } = await updateProjectMutation({
+        variables: {
+          id,
+          input: { name, description },
+        },
+      });
+      if (updateData?.updateProject) {
+        toast.success('Project updated successfully!');
+        router.push('/projects');
+      }
     } catch (err) {
       console.error('Failed to update project:', err);
-      setError('Failed to update project.');
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to update project.');
+      }
     }
   };
 
@@ -96,11 +100,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  if (error) {
-    return <div className="container mx-auto p-4 text-red-500">Error: {error}</div>;
-  }
-
-  if (!project) {
+  if (!data?.project) {
     return <div className="container mx-auto p-4">Project not found.</div>;
   }
 
@@ -128,6 +128,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                disabled={updating}
               />
             </div>
             <div className="space-y-2">
@@ -136,10 +137,13 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                disabled={updating}
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
-            <Button type="submit" className="w-full">Update Project</Button>
+            <Button type="submit" className="w-full" disabled={updating}>
+              {updating ? 'Updating...' : 'Update Project'}
+            </Button>
           </form>
         </CardContent>
       </Card>
