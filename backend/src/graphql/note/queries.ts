@@ -1,15 +1,15 @@
-import { getNoteByTaskId, getNotesForTasks } from '../../services/NoteService';
+import { getNote, getNotesForTasks, getUserNotes } from '../../services/NoteService';
 import { GraphQLContext } from '../context';
 import { Types } from 'mongoose';
 
 export const noteQueries = {
-    note: async (_: unknown, { taskId }: { taskId: string }, context: GraphQLContext) => {
+    note: async (_: unknown, { taskId, projectId, eventId }: { taskId?: string; projectId?: string; eventId?: string }, context: GraphQLContext) => {
         if (!context.user) {
             throw new Error('Not authenticated');
         }
 
         const userId = new Types.ObjectId(context.user.id);
-        const note = await getNoteByTaskId(taskId, userId);
+        const note = await getNote({ taskId, projectId, eventId }, userId);
 
         if (!note) {
             return null;
@@ -34,5 +34,25 @@ export const noteQueries = {
 
         const userId = new Types.ObjectId(context.user.id);
         return getNotesForTasks(taskIds, userId);
+    },
+
+    myNotes: async (_: unknown, __: unknown, context: GraphQLContext) => {
+        if (!context.user) {
+            throw new Error('Not authenticated');
+        }
+        const userId = new Types.ObjectId(context.user.id);
+        const notes = await getUserNotes(userId);
+        return notes.map(note => ({
+            id: String(note._id),
+            taskId: note.taskId ? String(note.taskId) : null,
+            projectId: note.projectId ? String(note.projectId) : null,
+            eventId: note.eventId ? String(note.eventId) : null,
+            userId: String(note.userId),
+            textContent: note.textContent,
+            codeBlocks: note.codeBlocks,
+            drawingData: note.drawingData,
+            createdAt: note.createdAt.toISOString(),
+            updatedAt: note.updatedAt.toISOString(),
+        }));
     },
 };

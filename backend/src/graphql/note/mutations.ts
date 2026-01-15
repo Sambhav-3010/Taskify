@@ -16,7 +16,7 @@ interface NoteInput {
 export const noteMutations = {
     upsertNote: async (
         _: unknown,
-        { taskId, input }: { taskId: string; input: NoteInput },
+        { taskId, projectId, eventId, input }: { taskId?: string; projectId?: string; eventId?: string; input: NoteInput },
         context: GraphQLContext
     ) => {
         if (!context.user) {
@@ -24,7 +24,8 @@ export const noteMutations = {
         }
 
         const userId = new Types.ObjectId(context.user.id);
-        const note = await upsertNote(taskId, input, userId);
+
+        const note = await upsertNote({ taskId, projectId, eventId }, input, userId);
 
         return {
             id: String(note._id),

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@apollo/client';
 import { useAuth } from '@/context/AuthContext';
@@ -60,7 +60,7 @@ export default function CalendarPage() {
         skip: !user,
     });
 
-    const tasks: Task[] = data?.tasks?.tasks?.map((t: GraphQLTask) => ({
+    const tasks: Task[] = useMemo(() => data?.tasks?.tasks?.map((t: GraphQLTask) => ({
         _id: t.id,
         title: t.title,
         status: t.status as Task['status'],
@@ -69,7 +69,7 @@ export default function CalendarPage() {
         projectId: t.project ? { _id: t.project.id, name: t.project.name } as unknown as Project : t.projectId,
         projectName: t.project?.name,
         userId: t.userId,
-    })) || [];
+    })) || [], [data]);
 
     const handleSelectSlot = useCallback((slotInfo: SlotInfo) => {
         setSelectedDate(slotInfo.start);

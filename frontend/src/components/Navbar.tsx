@@ -1,33 +1,20 @@
 "use client";
 import React, { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { LogOut, User2Icon, MenuIcon, XIcon, Calendar } from "lucide-react"; // Added MenuIcon and XIcon
+import { LogOut, User2Icon, MenuIcon, XIcon, Calendar } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 
 const Navbar = () => {
-  const { user, setUser } = useAuth();
+  const { user, setUser, logout } = useAuth();
   const router = useRouter();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
 
   const handleLogout = async () => {
-    try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`,
-        {},
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true,
-        }
-      );
-      setUser(null);
-      router.push("/auth/login");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+    await logout();
+    router.push("/auth/login");
   };
 
   return (
@@ -82,6 +69,9 @@ const Navbar = () => {
                     Calendar
                   </Button>
                 </Link>
+                <Link href="/notes">
+                  <Button variant="ghost" size="sm">Notes</Button>
+                </Link>
               </>
             )}
           </nav>
@@ -117,6 +107,9 @@ const Navbar = () => {
                     <Calendar className="h-4 w-4 mr-2" />
                     Calendar
                   </Button>
+                </Link>
+                <Link href="/notes">
+                  <Button variant="ghost" size="sm" className="w-full justify-start">Notes</Button>
                 </Link>
               </>
             )}

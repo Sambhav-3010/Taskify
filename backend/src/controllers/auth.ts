@@ -2,14 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import User from "../models/User";
 import { signJwt, verifyJwt } from "../utils/jwt";
-
-const COOKIE_NAME = process.env.COOKIE_NAME || "token";
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "none" as const,
-  maxAge: 1000 * 60 * 60 * 24 * 7,
-};
+import { COOKIE_NAME, getCookieOptions } from "../utils/cookies";
 
 export async function signup(req: Request, res: Response) {
   const { email, password, name } = req.body;
@@ -26,7 +19,7 @@ export async function signup(req: Request, res: Response) {
   const user = await User.create({ email, password: hashed, name });
   const token = signJwt({ id: user._id.toString(), email: user.email });
 
-  res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+  res.cookie(COOKIE_NAME, token, getCookieOptions());
   return res.status(201).json({
     message: "User created",
     user: { id: user._id, email: user.email, name: user.name },
@@ -52,17 +45,18 @@ export async function login(req: Request, res: Response) {
     email: user.email,
     name: user.name,
   });
-  res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+  res.cookie(COOKIE_NAME, token, getCookieOptions());
   return res.json({
     user: { id: user._id, email: user.email, name: user.name },
   });
 }
 
 export async function logout(req: Request, res: Response) {
+  const cookieOptions = getCookieOptions();
   res.clearCookie(COOKIE_NAME, {
-    httpOnly: true,
-    sameSite: "none",
-    secure: process.env.NODE_ENV === "production",
+    httpOnly: cookieOptions.httpOnly,
+    sameSite: cookieOptions.sameSite,
+    secure: cookieOptions.secure,
   });
   return res.json({ message: "Logged out" });
 }
@@ -86,7 +80,7 @@ export async function googleAuth(req: Request, res: Response) {
       email,
       name,
     });
-    res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+    res.cookie(COOKIE_NAME, token, getCookieOptions());
     res.redirect(process.env.FRONTEND_URL || "http://localhost:3000");
   } catch (err) {
     console.error(err);

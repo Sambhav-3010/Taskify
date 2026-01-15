@@ -144,14 +144,8 @@ export default function TasksPage() {
     toast.success(`Exported ${calendarTasks.length} tasks to calendar file`);
   };
 
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      router.push('/auth/login');
-      return;
-    }
-  }, [user, authLoading, router]);
+  // Auth check is handled by ProtectedRoute or middleware, removing manual redirect
+  // which causes issues during hydration loading states.
 
   const getStatusColor = (status: string) => {
     switch (status) {

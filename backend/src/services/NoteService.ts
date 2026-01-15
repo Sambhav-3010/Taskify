@@ -12,18 +12,36 @@ interface NoteInput {
     drawingData?: string;
 }
 
-// Get note by task ID
-export async function getNoteByTaskId(taskId: string, userId: Types.ObjectId): Promise<INote | null> {
-    return Note.findOne({ taskId, userId });
+// Get note by target
+export async function getNote(
+    target: { taskId?: string; projectId?: string; eventId?: string },
+    userId: Types.ObjectId
+): Promise<INote | null> {
+    const query: FilterQuery<INote> = { userId };
+    if (target.taskId) query.taskId = target.taskId;
+    if (target.projectId) query.projectId = target.projectId;
+    if (target.eventId) query.eventId = target.eventId;
+
+    return Note.findOne(query);
 }
 
-// Create or update note for a task
+// Deprecated: keeping for backward compatibility if needed, but should use getNote
+export async function getNoteByTaskId(taskId: string, userId: Types.ObjectId): Promise<INote | null> {
+    return getNote({ taskId }, userId);
+}
+
+// Create or update note for a target (task, project, or event)
 export async function upsertNote(
-    taskId: string,
+    target: { taskId?: string; projectId?: string; eventId?: string },
     input: NoteInput,
     userId: Types.ObjectId
 ): Promise<INote> {
-    const existingNote = await Note.findOne({ taskId, userId });
+    const query: FilterQuery<INote> = { userId };
+    if (target.taskId) query.taskId = target.taskId;
+    if (target.projectId) query.projectId = target.projectId;
+    if (target.eventId) query.eventId = target.eventId;
+
+    let existingNote = await Note.findOne(query);
 
     if (existingNote) {
         // Update existing note
@@ -40,13 +58,18 @@ export async function upsertNote(
         return existingNote;
     } else {
         // Create new note
-        const note = new Note({
-            taskId: new Types.ObjectId(taskId),
+        const noteData: any = {
             userId,
             textContent: input.textContent || '',
             codeBlocks: input.codeBlocks || [],
             drawingData: input.drawingData || '',
-        });
+        };
+
+        if (target.taskId) noteData.taskId = new Types.ObjectId(target.taskId);
+        if (target.projectId) noteData.projectId = new Types.ObjectId(target.projectId);
+        if (target.eventId) noteData.eventId = new Types.ObjectId(target.eventId);
+
+        const note = new Note(noteData);
         await note.save();
         return note;
     }
@@ -72,4 +95,8 @@ export async function getNotesForTasks(taskIds: string[], userId: Types.ObjectId
     }).select('taskId');
 
     return notes.map(n => String(n.taskId));
+}
+
+export async function getUserNotes(userId: Types.ObjectId): Promise<INote[]> {
+    return Note.find({ userId }).sort({ updatedAt: -1 });
 }

@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { createContext, useContext, useState, useEffect } from "react";
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, useApolloClient } from "@apollo/client";
 import { ME_QUERY, LOGOUT_MUTATION } from "@/graphql";
 
 export interface BackendUser {
@@ -29,36 +29,47 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<BackendUser | null>(null);
 
-  const { data, loading } = useQuery(ME_QUERY, {
+  // Track if we've synchronized the user state with the query data at least once
+  const [isAuthCheckComplete, setIsAuthCheckComplete] = useState(false);
+
+  const { data, loading: queryLoading } = useQuery(ME_QUERY, {
     fetchPolicy: "network-only",
   });
 
   const [logoutMutation] = useMutation(LOGOUT_MUTATION);
 
   useEffect(() => {
-    if (data?.me) {
-      setUser({
-        id: data.me.id,
-        email: data.me.email,
-        name: data.me.name,
-      });
-    } else if (!loading) {
-      setUser(null);
+    if (!queryLoading) {
+      if (data?.me) {
+        setUser({
+          id: data.me.id,
+          email: data.me.email,
+          name: data.me.name,
+        });
+      } else {
+        setUser(null);
+      }
+      setIsAuthCheckComplete(true);
     }
-  }, [data, loading]);
+  }, [data, queryLoading]);
+
+  const client = useApolloClient();
 
   const logout = async () => {
     try {
       await logoutMutation();
-      setUser(null);
     } catch (error) {
       console.error("Logout failed:", error);
+    } finally {
+      setUser(null);
+      await client.resetStore();
     }
   };
 
   const value: AuthContextType = {
     user,
-    loading,
+    // Only verify loading is false when query is done AND we've updated the user state
+    loading: queryLoading || !isAuthCheckComplete,
     setUser,
     logout,
   };

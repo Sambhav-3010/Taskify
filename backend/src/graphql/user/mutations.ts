@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import User from '../../models/User';
 import { signJwt } from '../../utils/jwt';
 import { GraphQLContext } from '../context';
+import { COOKIE_NAME, getCookieOptions } from '../../utils/cookies';
 
 interface SignupInput {
     email: string;
@@ -28,12 +29,7 @@ export const userMutations = {
         const token = signJwt({ id: user._id.toString(), email: user.email });
 
         // Set cookie
-        context.res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'none',
-            maxAge: 1000 * 60 * 60 * 24 * 7,
-        });
+        context.res.cookie(COOKIE_NAME, token, getCookieOptions());
 
         return {
             message: 'User created',
@@ -65,12 +61,7 @@ export const userMutations = {
             name: user.name,
         });
 
-        context.res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'none',
-            maxAge: 1000 * 60 * 60 * 24 * 7,
-        });
+        context.res.cookie(COOKIE_NAME, token, getCookieOptions());
 
         return {
             message: 'Login successful',
@@ -84,10 +75,11 @@ export const userMutations = {
     },
 
     logout: async (_: unknown, __: unknown, context: GraphQLContext) => {
-        context.res.clearCookie('token', {
-            httpOnly: true,
-            sameSite: 'none',
-            secure: process.env.NODE_ENV === 'production',
+        const cookieOptions = getCookieOptions();
+        context.res.clearCookie(COOKIE_NAME, {
+            httpOnly: cookieOptions.httpOnly,
+            sameSite: cookieOptions.sameSite,
+            secure: cookieOptions.secure,
         });
 
         return {

@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
-import { GET_PROJECTS, CREATE_TASK } from '@/graphql';
+import { GET_PROJECTS, CREATE_TASK, GET_TASKS } from '@/graphql';
 
 interface GraphQLProject {
   id: string;
@@ -38,7 +38,10 @@ export default function NewTaskPage() {
     skip: !user,
   });
 
-  const [createTaskMutation, { loading: creatingTask }] = useMutation(CREATE_TASK);
+  const [createTaskMutation, { loading: creatingTask }] = useMutation(CREATE_TASK, {
+    refetchQueries: [{ query: GET_TASKS }],
+    awaitRefetchQueries: true,
+  });
 
   const projects: Project[] = projectsData?.projects?.map((p: GraphQLProject) => ({
     _id: p.id,
