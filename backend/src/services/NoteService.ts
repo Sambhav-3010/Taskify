@@ -27,6 +27,14 @@ export async function getNote(
     return Note.findOne(query);
 }
 
+// Get note by ID
+export async function getNoteById(
+    noteId: string,
+    userId: Types.ObjectId
+): Promise<INote | null> {
+    return Note.findOne({ _id: noteId, userId });
+}
+
 // Deprecated: keeping for backward compatibility if needed, but should use getNote
 export async function getNoteByTaskId(taskId: string, userId: Types.ObjectId): Promise<INote | null> {
     return getNote({ taskId }, userId);

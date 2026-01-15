@@ -22,6 +22,7 @@ export const noteTypeDefs = `#graphql
 
   extend type Query {
     note(taskId: ID, projectId: ID, eventId: ID): Note
+    noteById(id: ID!): Note
     tasksWithNotes(taskIds: [ID!]!): [ID!]!
     myNotes: [Note!]!
   }
