@@ -86,6 +86,9 @@ export async function upsertNote(
         if (input.drawingData !== undefined) {
             existingNote.drawingData = input.drawingData;
         }
+        if (input.type !== undefined) {
+            existingNote.type = input.type;
+        }
 
         if (target.taskId) existingNote.taskId = new Types.ObjectId(target.taskId);
         if (target.projectId) existingNote.projectId = new Types.ObjectId(target.projectId);
@@ -100,6 +103,7 @@ export async function upsertNote(
             textContent: input.textContent || '',
             codeBlocks: input.codeBlocks || [],
             drawingData: input.drawingData || '',
+            type: input.type || 'text',
         };
 
         if (target.taskId) noteData.taskId = new Types.ObjectId(target.taskId);
@@ -138,4 +142,8 @@ export async function getNotesForTasks(taskIds: string[], userId: Types.ObjectId
 
 export async function getUserNotes(userId: Types.ObjectId): Promise<INote[]> {
     return Note.find({ userId }).sort({ updatedAt: -1 });
+}
+
+export async function getNotesByTask(taskId: string, userId: Types.ObjectId): Promise<INote[]> {
+    return Note.find({ taskId, userId }).sort({ updatedAt: -1 });
 }

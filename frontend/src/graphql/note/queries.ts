@@ -38,6 +38,11 @@ export const GET_MY_NOTES = gql`
       title
       description
       textContent
+      codeBlocks {
+        language
+        code
+      }
+      drawingData
       type
       createdAt
       updatedAt

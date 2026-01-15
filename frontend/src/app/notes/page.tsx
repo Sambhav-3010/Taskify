@@ -19,12 +19,15 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { NotePreviewModal } from '@/components/notes/NotePreviewModal';
 
 interface Note {
     id: string;
     title: string;
     description: string;
     textContent: string;
+    codeBlocks?: { language: string; code: string }[];
+    drawingData?: string;
     type: 'text' | 'code' | 'drawing';
     taskId?: string;
     projectId?: string;
@@ -60,8 +63,20 @@ export default function NotesPage() {
     };
 
     const handleEditClick = (note: Note) => {
+        // Determine the effective type based on content if the saved type seems wrong
+        let effectiveType = note.type;
+
+        // If it's saved as 'text' but has code blocks and empty text, treat as code
+        if (note.type === 'text' && note.codeBlocks && note.codeBlocks.length > 0 && !note.textContent) {
+            effectiveType = 'code';
+        }
+        // If it's saved as 'text' but has drawing data and empty text, treat as drawing
+        else if (note.type === 'text' && note.drawingData && !note.textContent) {
+            effectiveType = 'drawing';
+        }
+
         // Navigate to the editor with note data
-        router.push(`/notes/new?type=${note.type}&noteId=${note.id}`);
+        router.push(`/notes/new?type=${effectiveType}&noteId=${note.id}`);
     };
 
     const handleDeleteClick = async (note: Note) => {
@@ -162,8 +177,10 @@ export default function NotesPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-foreground whitespace-pre-wrap line-clamp-3">
-                                    {note.textContent || (note.type === 'drawing' ? '[Drawing]' : '[No content]')}
+                                <p className={`text-sm text-foreground whitespace-pre-wrap line-clamp-3 ${(note.type === 'code' || (note.codeBlocks && note.codeBlocks.length > 0)) ? 'font-mono' : ''}`}>
+                                    {note.textContent ||
+                                        (note.codeBlocks && note.codeBlocks.length > 0 ? note.codeBlocks[0].code.split('\n').slice(0, 5).join('\n') :
+                                            (note.drawingData ? '[Drawing]' : '[No content]'))}
                                 </p>
                                 <div className="mt-4 flex gap-2 flex-wrap">
                                     <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 py-1 rounded">
@@ -207,80 +224,14 @@ export default function NotesPage() {
                     ))}
                 </div>
 
-                {/* Preview Modal */}
-                <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle className="text-xl">
-                                {selectedNote?.title || 'Untitled Note'}
-                            </DialogTitle>
-                            {selectedNote?.description && (
-                                <DialogDescription>{selectedNote.description}</DialogDescription>
-                            )}
-                        </DialogHeader>
-
-                        <div className="py-4">
-                            <div className="flex gap-2 mb-4 flex-wrap">
-                                <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 py-1 rounded">
-                                    {selectedNote && getTypeLabel(selectedNote.type)}
-                                </span>
-                                {selectedNote?.projectId && (
-                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Project Note</span>
-                                )}
-                                {selectedNote?.taskId && (
-                                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Task Note</span>
-                                )}
-                            </div>
-
-                            {selectedNote?.type === 'text' && (
-                                <div className="prose dark:prose-invert max-w-none">
-                                    <pre className="whitespace-pre-wrap bg-slate-50 dark:bg-slate-900 p-4 rounded-lg text-sm">
-                                        {selectedNote.textContent || 'No content'}
-                                    </pre>
-                                </div>
-                            )}
-
-                            {selectedNote?.type === 'code' && (
-                                <div className="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto">
-                                    <pre className="text-sm font-mono">
-                                        {selectedNote.textContent || 'No code content'}
-                                    </pre>
-                                </div>
-                            )}
-
-                            {selectedNote?.type === 'drawing' && (
-                                <div className="text-center text-muted-foreground p-8 bg-slate-50 dark:bg-slate-900 rounded-lg">
-                                    <Pencil className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                    <p>Drawing preview not available. Click Edit to view the drawing.</p>
-                                </div>
-                            )}
-
-                            <div className="text-xs text-muted-foreground mt-4">
-                                Created: {selectedNote && formatDate(selectedNote.createdAt)} |
-                                Updated: {selectedNote && formatDate(selectedNote.updatedAt)}
-                            </div>
-                        </div>
-
-                        <DialogFooter className="gap-2 sm:gap-0">
-                            <Button
-                                variant="destructive"
-                                onClick={() => selectedNote && handleDeleteClick(selectedNote)}
-                                disabled={deleting}
-                                className="gap-1"
-                            >
-                                <Trash2 className="h-4 w-4" />
-                                {deleting ? 'Deleting...' : 'Delete'}
-                            </Button>
-                            <Button
-                                onClick={() => selectedNote && handleEditClick(selectedNote)}
-                                className="gap-1"
-                            >
-                                <Edit className="h-4 w-4" />
-                                Edit Note
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                <NotePreviewModal
+                    note={selectedNote}
+                    isOpen={isPreviewOpen}
+                    onClose={setIsPreviewOpen}
+                    onEdit={handleEditClick}
+                    onDelete={handleDeleteClick}
+                    deleting={deleting}
+                />
             </div>
         </ProtectedRoute>
     );

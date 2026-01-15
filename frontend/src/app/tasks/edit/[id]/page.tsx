@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@apollo/client';
+import { useQuery, useMutation, gql } from '@apollo/client';
 import { Project } from '@/lib/models';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
@@ -11,11 +11,30 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomSelect, CustomSelectItem } from '@/components/CustomSelect';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText, Code, Pencil, Eye, Edit } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GET_TASK, GET_PROJECTS, UPDATE_TASK } from '@/graphql';
 import { toast } from 'sonner';
-import NoteEditor from '@/components/notes/NoteEditor';
+import { NotePreviewModal } from '@/components/notes/NotePreviewModal';
+
+const GET_NOTES_BY_TASK = gql`
+  query GetNotesByTask($taskId: ID!) {
+    notesByTask(taskId: $taskId) {
+      id
+      title
+      description
+      textContent
+      codeBlocks {
+        language
+        code
+      }
+      drawingData
+      type
+      createdAt
+      updatedAt
+    }
+  }
+`;
 
 interface GraphQLProject {
   id: string;
@@ -42,7 +61,7 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
     onCompleted: (data) => {
       if (data?.task) {
         setTitle(data.task.title);
-        setDeadline(data.task.deadline ? new Date(data.task.deadline).toISOString().split('T')[0] : '');
+        setDeadline(data.task.deadline ? new Date(data.task.deadline).toISOString().slice(0, 16) : '');
         setPriority(data.task.priority || 'medium');
         setStatus(data.task.status || 'todo');
         setProjectId(data.task.projectId || 'no-project-selected');
@@ -54,7 +73,15 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
     skip: !user,
   });
 
+  const { data: notesData, loading: notesLoading } = useQuery(GET_NOTES_BY_TASK, {
+    variables: { taskId: id },
+    skip: !user || !id,
+  });
+
   const [updateTaskMutation, { loading: updating }] = useMutation(UPDATE_TASK);
+
+  const [selectedNote, setSelectedNote] = useState<any>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const projects: Project[] = projectsData?.projects?.map((p: GraphQLProject) => ({
     _id: p.id,
@@ -84,7 +111,7 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
           id,
           input: {
             title,
-            deadline,
+            deadline: deadline ? new Date(deadline).toISOString() : undefined,
             priority,
             status,
             projectId: projectId === 'no-project-selected' ? null : projectId,
@@ -103,6 +130,21 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
         setError('Failed to update task.');
       }
     }
+  };
+
+  const handleViewNote = (note: any) => {
+    setSelectedNote(note);
+    setIsPreviewOpen(true);
+  };
+
+  const handleEditNote = (note: any) => {
+    let effectiveType = note.type;
+    if (note.type === 'text' && note.codeBlocks && note.codeBlocks.length > 0 && !note.textContent) {
+      effectiveType = 'code';
+    } else if (note.type === 'text' && note.drawingData && !note.textContent) {
+      effectiveType = 'drawing';
+    }
+    router.push(`/notes/new?type=${effectiveType}&noteId=${note.id}`);
   };
 
   if (loading || authLoading) {
@@ -162,7 +204,7 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
                 </Button>
               </Link>
               <CardTitle className="text-2xl font-bold text-center flex-grow">Edit Task</CardTitle>
-              <div className="w-10"></div> {/* Spacer to balance the back button */}
+              <div className="w-10"></div>
             </div>
           </CardHeader>
           <CardContent className="pt-4">
@@ -182,7 +224,7 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
                 <Label htmlFor="deadline">Deadline</Label>
                 <Input
                   id="deadline"
-                  type="date"
+                  type="datetime-local"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
                   disabled={updating}
@@ -242,9 +284,61 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
           </CardContent>
         </Card>
 
-        {/* Notes Section */}
-        {/* Notes Section - Defaulting to text note for quick add */}
-        <NoteEditor type="text" defaultTargetType="task" defaultTargetId={id} />
+        {/* Linked Notes Section */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold px-1">Linked Notes</h3>
+          {notesLoading ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          ) : notesData?.notesByTask?.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {notesData.notesByTask.map((note: any) => (
+                <Card key={note.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-2">
+                        {note.type === 'code' ? <Code className="h-4 w-4 text-muted-foreground" /> :
+                          note.type === 'drawing' ? <Pencil className="h-4 w-4 text-muted-foreground" /> :
+                            <FileText className="h-4 w-4 text-muted-foreground" />}
+                        <CardTitle className="text-base font-medium truncate w-32 md:w-48">
+                          {note.title || 'Untitled Note'}
+                        </CardTitle>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pb-2">
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {note.description || 'No description'}
+                    </p>
+                  </CardContent>
+                  <div className="p-4 pt-0 flex gap-2 mt-auto">
+                    <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => handleViewNote(note)}>
+                      <Eye className="h-3 w-3" /> View
+                    </Button>
+                    <Button variant="secondary" size="sm" className="flex-1 gap-1" onClick={() => handleEditNote(note)}>
+                      <Edit className="h-3 w-3" /> Edit
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center p-8 border rounded-lg bg-slate-50 dark:bg-slate-900 text-muted-foreground">
+              No notes linked to this task.
+            </div>
+          )}
+        </div>
+
+        <NotePreviewModal
+          note={selectedNote}
+          isOpen={isPreviewOpen}
+          onClose={setIsPreviewOpen}
+          onEdit={handleEditNote}
+          onDelete={() => { }}
+          deleting={false}
+        />
       </div>
     </div>
   );

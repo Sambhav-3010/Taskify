@@ -36,7 +36,7 @@ interface QuickAddTaskProps {
 
 export default function QuickAddTask({ open, onOpenChange, defaultDate, onSuccess }: QuickAddTaskProps) {
     const [title, setTitle] = useState('');
-    const [deadline, setDeadline] = useState(defaultDate ? format(defaultDate, 'yyyy-MM-dd') : '');
+    const [deadline, setDeadline] = useState(defaultDate ? format(defaultDate, "yyyy-MM-dd'T'HH:mm") : '');
     const [priority, setPriority] = useState('medium');
     const [status, setStatus] = useState('todo');
     const [projectId, setProjectId] = useState('no-project-selected');
@@ -57,7 +57,7 @@ export default function QuickAddTask({ open, onOpenChange, defaultDate, onSucces
 
     const resetForm = () => {
         setTitle('');
-        setDeadline(defaultDate ? format(defaultDate, 'yyyy-MM-dd') : '');
+        setDeadline(defaultDate ? format(defaultDate, "yyyy-MM-dd'T'HH:mm") : '');
         setPriority('medium');
         setStatus('todo');
         setProjectId('no-project-selected');
@@ -83,7 +83,7 @@ export default function QuickAddTask({ open, onOpenChange, defaultDate, onSucces
                 variables: {
                     input: {
                         title: title.trim(),
-                        deadline,
+                        deadline: new Date(deadline).toISOString(),
                         priority,
                         status,
                         projectId: projectId === 'no-project-selected' ? null : projectId,
@@ -145,7 +145,7 @@ export default function QuickAddTask({ open, onOpenChange, defaultDate, onSucces
                             <Label htmlFor="deadline">Deadline *</Label>
                             <Input
                                 id="deadline"
-                                type="date"
+                                type="datetime-local"
                                 value={deadline}
                                 onChange={(e) => setDeadline(e.target.value)}
                                 disabled={creating}

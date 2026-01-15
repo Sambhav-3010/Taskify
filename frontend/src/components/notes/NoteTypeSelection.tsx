@@ -25,12 +25,12 @@ export function NoteTypeSelection({ open, onOpenChange, onSelectType }: NoteType
                 <div className="grid grid-cols-1 gap-4 py-4">
                     <Button
                         variant="outline"
-                        className="h-20 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 hover:border-primary transition-all"
-                        onClick={() => onSelectType('drawing')}
+                        className="h-20 flex flex-col items-center justify-center gap-2 transition-all opacity-50 cursor-not-allowed"
+                        disabled={true}
                     >
                         <PenTool className="h-6 w-6" />
                         <span className="font-semibold">Freehand Drawing</span>
-                        <span className="text-xs text-muted-foreground font-normal">Sketch ideas with Excalidraw</span>
+                        <span className="text-xs font-bold text-primary">Coming soon</span>
                     </Button>
 
                     <Button

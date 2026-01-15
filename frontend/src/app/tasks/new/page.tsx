@@ -72,7 +72,7 @@ export default function NewTaskPage() {
             title,
             status,
             priority,
-            deadline,
+            deadline: deadline ? new Date(deadline).toISOString() : undefined,
             projectId: projectId === "no-project-selected" ? null : projectId,
           },
         },
@@ -206,7 +206,7 @@ export default function NewTaskPage() {
               <Label htmlFor="deadline">Deadline</Label>
               <Input
                 id="deadline"
-                type="date"
+                type="datetime-local"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
                 required

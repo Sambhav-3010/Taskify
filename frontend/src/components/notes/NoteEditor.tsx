@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { UPSERT_NOTE, GET_MY_NOTES, GET_PROJECTS, GET_TASKS, DELETE_NOTE } from '@/graphql';
 import { toast } from 'sonner';
@@ -46,6 +46,25 @@ export default function NoteEditor({ type, initialData, defaultTargetType = 'non
         language: initialData?.codeBlocks?.[0]?.language || 'javascript'
     });
     const [drawingData, setDrawingData] = useState(initialData?.drawingData || '');
+
+    useEffect(() => {
+        if (initialData) {
+            setNoteId(initialData._id || initialData.id);
+            setTitle(initialData.title || '');
+            setDescription(initialData.description || '');
+            setTextContent(initialData.textContent || '');
+            if (initialData.codeBlocks && initialData.codeBlocks.length > 0) {
+                setCodeData({
+                    code: initialData.codeBlocks[0].code,
+                    language: initialData.codeBlocks[0].language
+                });
+            } else {
+                // Reset if no code blocks found but type might be code
+                setCodeData({ code: '', language: 'javascript' });
+            }
+            setDrawingData(initialData.drawingData || '');
+        }
+    }, [initialData]);
 
     // Association State
     const [targetType, setTargetType] = useState<'none' | 'project' | 'task'>(defaultTargetType);

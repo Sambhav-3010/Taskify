@@ -25,6 +25,7 @@ export const noteTypeDefs = `#graphql
     noteById(id: ID!): Note
     tasksWithNotes(taskIds: [ID!]!): [ID!]!
     myNotes: [Note!]!
+    notesByTask(taskId: ID!): [Note!]!
   }
 
   extend type Mutation {
