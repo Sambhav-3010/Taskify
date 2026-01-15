@@ -7,12 +7,14 @@ interface CodeBlock {
 }
 
 interface NoteInput {
+    title?: string;
+    description?: string;
     textContent?: string;
     codeBlocks?: CodeBlock[];
     drawingData?: string;
+    type?: 'text' | 'code' | 'drawing';
 }
 
-// Get note by target
 export async function getNote(
     target: { taskId?: string; projectId?: string; eventId?: string },
     userId: Types.ObjectId
@@ -30,21 +32,43 @@ export async function getNoteByTaskId(taskId: string, userId: Types.ObjectId): P
     return getNote({ taskId }, userId);
 }
 
-// Create or update note for a target (task, project, or event)
+// Create or update note for a target (task, project, or event) OR by noteId
 export async function upsertNote(
     target: { taskId?: string; projectId?: string; eventId?: string },
     input: NoteInput,
-    userId: Types.ObjectId
+    userId: Types.ObjectId,
+    noteId?: string // Optional note ID for direct updates
 ): Promise<INote> {
-    const query: FilterQuery<INote> = { userId };
-    if (target.taskId) query.taskId = target.taskId;
-    if (target.projectId) query.projectId = target.projectId;
-    if (target.eventId) query.eventId = target.eventId;
+    let existingNote: INote | null = null;
 
-    let existingNote = await Note.findOne(query);
+    if (noteId) {
+        // If noteId is provided, look for that specific note first
+        existingNote = await Note.findOne({ _id: noteId, userId });
+        if (!existingNote) {
+            throw new Error('Note not found');
+        }
+    } else {
+        // Fallback to finding by target (legacy behavior / initial creation for associated notes)
+        const query: FilterQuery<INote> = { userId };
+        let hasTarget = false;
+
+        if (target.taskId) { query.taskId = target.taskId; hasTarget = true; }
+        if (target.projectId) { query.projectId = target.projectId; hasTarget = true; }
+        if (target.eventId) { query.eventId = target.eventId; hasTarget = true; }
+
+        if (hasTarget) {
+            existingNote = await Note.findOne(query);
+        }
+    }
 
     if (existingNote) {
         // Update existing note
+        if (input.title !== undefined) {
+            existingNote.title = input.title;
+        }
+        if (input.description !== undefined) {
+            existingNote.description = input.description;
+        }
         if (input.textContent !== undefined) {
             existingNote.textContent = input.textContent;
         }
@@ -54,12 +78,17 @@ export async function upsertNote(
         if (input.drawingData !== undefined) {
             existingNote.drawingData = input.drawingData;
         }
+
+        if (target.taskId) existingNote.taskId = new Types.ObjectId(target.taskId);
+        if (target.projectId) existingNote.projectId = new Types.ObjectId(target.projectId);
+
         await existingNote.save();
         return existingNote;
     } else {
-        // Create new note
         const noteData: any = {
             userId,
+            title: input.title || 'Untitled Note',
+            description: input.description || '',
             textContent: input.textContent || '',
             codeBlocks: input.codeBlocks || [],
             drawingData: input.drawingData || '',
@@ -75,19 +104,21 @@ export async function upsertNote(
     }
 }
 
-// Delete note by task ID
 export async function deleteNoteByTaskId(taskId: string, userId: Types.ObjectId): Promise<boolean> {
     const result = await Note.deleteOne({ taskId, userId });
     return result.deletedCount > 0;
 }
 
-// Check if a task has a note
+export async function deleteNote(noteId: string, userId: Types.ObjectId): Promise<boolean> {
+    const result = await Note.deleteOne({ _id: noteId, userId });
+    return result.deletedCount > 0;
+}
+
 export async function taskHasNote(taskId: string, userId: Types.ObjectId): Promise<boolean> {
     const count = await Note.countDocuments({ taskId, userId });
     return count > 0;
 }
 
-// Get notes for multiple tasks (for displaying indicators)
 export async function getNotesForTasks(taskIds: string[], userId: Types.ObjectId): Promise<string[]> {
     const notes = await Note.find({
         taskId: { $in: taskIds.map(id => new Types.ObjectId(id)) },

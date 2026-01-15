@@ -1,4 +1,4 @@
-import { upsertNote, deleteNoteByTaskId } from '../../services/NoteService';
+import { upsertNote, deleteNoteByTaskId, deleteNote } from '../../services/NoteService';
 import { GraphQLContext } from '../context';
 import { Types } from 'mongoose';
 
@@ -8,15 +8,18 @@ interface CodeBlockInput {
 }
 
 interface NoteInput {
+    title?: string;
+    description?: string;
     textContent?: string;
     codeBlocks?: CodeBlockInput[];
     drawingData?: string;
+    type?: 'text' | 'code' | 'drawing';
 }
 
 export const noteMutations = {
     upsertNote: async (
         _: unknown,
-        { taskId, projectId, eventId, input }: { taskId?: string; projectId?: string; eventId?: string; input: NoteInput },
+        { id, taskId, projectId, eventId, input }: { id?: string; taskId?: string; projectId?: string; eventId?: string; input: NoteInput },
         context: GraphQLContext
     ) => {
         if (!context.user) {
@@ -25,27 +28,40 @@ export const noteMutations = {
 
         const userId = new Types.ObjectId(context.user.id);
 
-        const note = await upsertNote({ taskId, projectId, eventId }, input, userId);
+        const note = await upsertNote({ taskId, projectId, eventId }, input, userId, id);
 
         return {
             id: String(note._id),
-            taskId: String(note.taskId),
+            taskId: note.taskId ? String(note.taskId) : undefined,
+            projectId: note.projectId ? String(note.projectId) : undefined,
+            eventId: note.eventId ? String(note.eventId) : undefined,
             userId: String(note.userId),
+            title: note.title,
+            description: note.description,
             textContent: note.textContent,
             codeBlocks: note.codeBlocks,
             drawingData: note.drawingData,
+            type: note.type,
             createdAt: note.createdAt.toISOString(),
             updatedAt: note.updatedAt.toISOString(),
         };
     },
 
-    deleteNote: async (_: unknown, { taskId }: { taskId: string }, context: GraphQLContext) => {
+    deleteNote: async (_: unknown, { id, taskId }: { id?: string; taskId?: string }, context: GraphQLContext) => {
         if (!context.user) {
             throw new Error('Not authenticated');
         }
 
         const userId = new Types.ObjectId(context.user.id);
-        const success = await deleteNoteByTaskId(taskId, userId);
+        let success = false;
+
+        if (id) {
+            success = await deleteNote(id, userId);
+        } else if (taskId) {
+            success = await deleteNoteByTaskId(taskId, userId);
+        } else {
+            throw new Error('Either id or taskId must be provided');
+        }
 
         return {
             message: success ? 'Note deleted successfully' : 'Note not found',

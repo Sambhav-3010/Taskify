@@ -1,13 +1,15 @@
 import { gql } from '@apollo/client';
 
 export const UPSERT_NOTE = gql`
-  mutation UpsertNote($taskId: ID, $projectId: ID, $eventId: ID, $input: NoteInput!) {
-    upsertNote(taskId: $taskId, projectId: $projectId, eventId: $eventId, input: $input) {
+  mutation UpsertNote($id: ID, $taskId: ID, $projectId: ID, $eventId: ID, $input: NoteInput!) {
+    upsertNote(id: $id, taskId: $taskId, projectId: $projectId, eventId: $eventId, input: $input) {
       id
       taskId
       projectId
       eventId
       userId
+      title
+      description
       textContent
       codeBlocks {
         language
@@ -21,8 +23,8 @@ export const UPSERT_NOTE = gql`
 `;
 
 export const DELETE_NOTE = gql`
-  mutation DeleteNote($taskId: ID!) {
-    deleteNote(taskId: $taskId) {
+  mutation DeleteNote($id: ID, $taskId: ID) {
+    deleteNote(id: $id, taskId: $taskId) {
       message
       success
     }

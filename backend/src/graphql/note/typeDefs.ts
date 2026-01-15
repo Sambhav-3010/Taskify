@@ -1,4 +1,4 @@
-export const noteTypeDefs = `
+export const noteTypeDefs = `#graphql
   type CodeBlock {
     language: String!
     code: String!
@@ -10,9 +10,12 @@ export const noteTypeDefs = `
     projectId: ID
     eventId: ID
     userId: ID!
+    title: String!
+    description: String!
     textContent: String!
     codeBlocks: [CodeBlock!]!
     drawingData: String!
+    type: String!
     createdAt: String!
     updatedAt: String!
   }
@@ -23,20 +26,8 @@ export const noteTypeDefs = `
     myNotes: [Note!]!
   }
 
-  input NoteInput {
-    textContent: String
-    codeBlocks: [CodeBlockInput]
-    drawingData: String
-    type: String
-  }
-
-  input CodeBlockInput {
-    language: String!
-    code: String!
-  }
-
   extend type Mutation {
-    upsertNote(taskId: ID, projectId: ID, eventId: ID, input: NoteInput!): Note!
-    deleteNote(taskId: ID!): DeleteResponse!
+    upsertNote(id: ID, taskId: ID, projectId: ID, eventId: ID, input: NoteInput!): Note!
+    deleteNote(id: ID, taskId: ID): DeleteResponse!
   }
 `;

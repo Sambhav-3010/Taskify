@@ -24,7 +24,7 @@ export function ExcalidrawEditor({ initialData, onChange }: ExcalidrawEditorProp
     };
 
     return (
-        <div className="h-[75vh] w-full border rounded-md overflow-hidden bg-white">
+        <div className="h-full w-full border rounded-md overflow-hidden bg-white shadow-sm">
             <Excalidraw
                 initialData={initialData ? { elements: JSON.parse(initialData) } : undefined}
                 onChange={handleChange}
@@ -32,7 +32,6 @@ export function ExcalidrawEditor({ initialData, onChange }: ExcalidrawEditorProp
                     canvasActions: {
                         loadScene: false,
                         saveToActiveFile: false,
-                        export: false,
                     }
                 }}
             />

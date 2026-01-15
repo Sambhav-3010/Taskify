@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
-import { UPSERT_NOTE, GET_MY_NOTES, GET_PROJECTS, GET_TASKS } from '@/graphql';
+import { UPSERT_NOTE, GET_MY_NOTES, GET_PROJECTS, GET_TASKS, DELETE_NOTE } from '@/graphql';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { MoreVertical, Save, ArrowLeft, Loader2 } from 'lucide-react';
@@ -35,11 +35,17 @@ interface NoteEditorProps {
     defaultTargetId?: string;
 }
 
-export default function NoteEditor({ type, initialData: _initialData, defaultTargetType = 'none', defaultTargetId = '' }: NoteEditorProps) {
+export default function NoteEditor({ type, initialData, defaultTargetType = 'none', defaultTargetId = '' }: NoteEditorProps) {
     const router = useRouter();
-    const [textContent, setTextContent] = useState('');
-    const [codeData, setCodeData] = useState({ code: '', language: 'javascript' });
-    const [drawingData, setDrawingData] = useState('');
+    const [noteId, setNoteId] = useState<string | undefined>(initialData?._id || initialData?.id);
+    const [title, setTitle] = useState(initialData?.title || ''); // Default empty, let backend handle default if needed, or set 'Untitled'
+    const [description, setDescription] = useState(initialData?.description || '');
+    const [textContent, setTextContent] = useState(initialData?.textContent || '');
+    const [codeData, setCodeData] = useState({
+        code: initialData?.codeBlocks?.[0]?.code || '',
+        language: initialData?.codeBlocks?.[0]?.language || 'javascript'
+    });
+    const [drawingData, setDrawingData] = useState(initialData?.drawingData || '');
 
     // Association State
     const [targetType, setTargetType] = useState<'none' | 'project' | 'task'>(defaultTargetType);
@@ -51,13 +57,21 @@ export default function NoteEditor({ type, initialData: _initialData, defaultTar
         awaitRefetchQueries: true,
     });
 
+    const [deleteNote, { loading: deleting }] = useMutation(DELETE_NOTE, {
+        refetchQueries: [{ query: GET_MY_NOTES }],
+        awaitRefetchQueries: true,
+    });
+
     const { data: projectsData } = useQuery(GET_PROJECTS);
     const { data: tasksData } = useQuery(GET_TASKS);
 
     const handleSave = async () => {
         try {
             const variables: any = {
+                id: noteId,
                 input: {
+                    title,
+                    description,
                     type,
                     textContent: type === 'text' ? textContent : undefined,
                     codeBlocks: type === 'code' ? [{ language: codeData.language, code: codeData.code }] : undefined,
@@ -69,15 +83,30 @@ export default function NoteEditor({ type, initialData: _initialData, defaultTar
             if (targetType === 'project' && targetId) variables.projectId = targetId;
             if (targetType === 'task' && targetId) variables.taskId = targetId;
 
-            // If strictly just creating a note without association, we send nulls?
-            // The backend handles optional IDs now.
+            const { data } = await upsertNote({ variables });
 
-            await upsertNote({ variables });
+            if (data?.upsertNote?.id) {
+                setNoteId(data.upsertNote.id);
+            }
+
             toast.success('Note saved successfully');
-            router.push('/notes');
         } catch (err: any) {
             console.error(err);
             toast.error(`Failed to save note: ${err.message}`);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!noteId) return;
+        if (!confirm('Are you sure you want to delete this note?')) return;
+
+        try {
+            await deleteNote({ variables: { id: noteId } });
+            toast.success('Note deleted');
+            router.back();
+        } catch (err: any) {
+            console.error(err);
+            toast.error(`Failed to delete note: ${err.message}`);
         }
     };
 
@@ -89,7 +118,22 @@ export default function NoteEditor({ type, initialData: _initialData, defaultTar
                     <Button variant="ghost" size="icon" onClick={() => router.back()}>
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
-                    <h1 className="text-xl font-semibold capitalize">{type} Note</h1>
+                    <div>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Note Title"
+                            className="text-xl font-semibold bg-transparent border-none focus:outline-none placeholder:text-muted-foreground"
+                        />
+                        <input
+                            type="text"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Add a description..."
+                            className="text-sm text-muted-foreground bg-transparent border-none focus:outline-none w-full"
+                        />
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -110,7 +154,13 @@ export default function NoteEditor({ type, initialData: _initialData, defaultTar
                             <DropdownMenuItem onSelect={() => setAssociateDialogOpen(true)}>
                                 Associate with...
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="text-red-600 focus:text-red-600"
+                                onSelect={handleDelete}
+                                disabled={!noteId || deleting}
+                            >
+                                {deleting ? 'Deleting...' : 'Delete'}
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -126,7 +176,7 @@ export default function NoteEditor({ type, initialData: _initialData, defaultTar
                         onChange={(code, language) => setCodeData({ code, language })}
                     />
                 )}
-                {type === 'drawing' && <ExcalidrawEditor onChange={setDrawingData} />}
+                {type === 'drawing' && <ExcalidrawEditor onChange={setDrawingData} initialData={initialData?.drawingData} />}
             </div>
 
             {/* Association Dialog */}

@@ -17,11 +17,15 @@ export const noteQueries = {
 
         return {
             id: String(note._id),
-            taskId: String(note.taskId),
+            projectId: note.projectId ? String(note.projectId) : undefined,
+            eventId: note.eventId ? String(note.eventId) : undefined,
             userId: String(note.userId),
+            title: note.title,
+            description: note.description,
             textContent: note.textContent,
             codeBlocks: note.codeBlocks,
             drawingData: note.drawingData,
+            type: note.type,
             createdAt: note.createdAt.toISOString(),
             updatedAt: note.updatedAt.toISOString(),
         };
@@ -48,9 +52,12 @@ export const noteQueries = {
             projectId: note.projectId ? String(note.projectId) : null,
             eventId: note.eventId ? String(note.eventId) : null,
             userId: String(note.userId),
+            title: note.title,
+            description: note.description,
             textContent: note.textContent,
             codeBlocks: note.codeBlocks,
             drawingData: note.drawingData,
+            type: note.type,
             createdAt: note.createdAt.toISOString(),
             updatedAt: note.updatedAt.toISOString(),
         }));

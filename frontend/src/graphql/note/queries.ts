@@ -8,6 +8,8 @@ export const GET_NOTE = gql`
       projectId
       eventId
       userId
+      title
+      description
       textContent
       codeBlocks {
         language
@@ -33,7 +35,10 @@ export const GET_MY_NOTES = gql`
       taskId
       projectId
       eventId
+      title
+      description
       textContent
+      type
       createdAt
       updatedAt
     }

@@ -5,8 +5,11 @@ export const noteInputs = `
   }
 
   input NoteInput {
+    title: String
+    description: String
     textContent: String
     codeBlocks: [CodeBlockInput!]
     drawingData: String
+    type: String
   }
 `;

@@ -24,6 +24,8 @@ interface CreateNoteModalProps {
 
 export function CreateNoteModal({ trigger }: CreateNoteModalProps) {
     const [open, setOpen] = useState(false);
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
     const [content, setContent] = useState('');
     const [targetType, setTargetType] = useState('none'); // none, task, project, event
     const [targetId, setTargetId] = useState('');
@@ -40,7 +42,11 @@ export function CreateNoteModal({ trigger }: CreateNoteModalProps) {
         e.preventDefault();
         try {
             const variables: any = {
-                input: { textContent: content },
+                input: {
+                    title,
+                    description,
+                    textContent: content
+                },
             };
 
             if (targetType === 'task' && targetId) variables.taskId = targetId;
@@ -50,6 +56,8 @@ export function CreateNoteModal({ trigger }: CreateNoteModalProps) {
             await upsertNote({ variables });
             toast.success('Note saved successfully');
             setOpen(false);
+            setTitle('');
+            setDescription('');
             setContent('');
             setTargetType('none');
             setTargetId('');
@@ -69,6 +77,23 @@ export function CreateNoteModal({ trigger }: CreateNoteModalProps) {
                     <DialogTitle>Create New Note</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label>Title</Label>
+                        <Input
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Note Title"
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Description</Label>
+                        <Input
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Brief description"
+                        />
+                    </div>
                     <div className="space-y-2">
                         <Label>Note Content</Label>
                         <Textarea

@@ -1,6 +1,4 @@
-'use client';
-
-import { Textarea } from '@/components/ui/textarea';
+import { Editor } from '@monaco-editor/react';
 import {
     Select,
     SelectContent,
@@ -8,6 +6,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
 
 interface CodeEditorProps {
     code: string;
@@ -30,7 +29,7 @@ const LANGUAGES = [
 
 export function CodeEditor({ code, language, onChange }: CodeEditorProps) {
     return (
-        <div className="space-y-4 h-[75vh] flex flex-col">
+        <div className="space-y-4 h-full flex flex-col">
             <div className="flex items-center gap-4">
                 <span className="text-sm font-medium">Language:</span>
                 <Select value={language} onValueChange={(val) => onChange(code, val)}>
@@ -46,13 +45,25 @@ export function CodeEditor({ code, language, onChange }: CodeEditorProps) {
                     </SelectContent>
                 </Select>
             </div>
-            <Textarea
-                className="flex-1 font-mono text-sm resize-none bg-slate-950 text-slate-50 border-slate-800"
-                value={code}
-                onChange={(e) => onChange(e.target.value, language)}
-                placeholder="// Write your code here..."
-                spellCheck={false}
-            />
+
+            <div className="flex-1 border rounded-md overflow-hidden shadow-sm bg-[#1e1e1e]">
+                <Editor
+                    height="100%"
+                    language={language}
+                    value={code}
+                    theme="vs-dark"
+                    onChange={(value) => onChange(value || '', language)}
+                    loading={<div className="flex items-center justify-center h-full text-slate-400"><Loader2 className="w-6 h-6 animate-spin mr-2" />Loading Editor...</div>}
+                    options={{
+                        minimap: { enabled: false },
+                        fontSize: 14,
+                        wordWrap: 'on',
+                        automaticLayout: true,
+                        scrollBeyondLastLine: false,
+                        padding: { top: 16, bottom: 16 },
+                    }}
+                />
+            </div>
         </div>
     );
 }

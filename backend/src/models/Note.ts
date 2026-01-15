@@ -1,10 +1,12 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, Types } from 'mongoose';
 
 export interface INote extends Document {
-    taskId?: Schema.Types.ObjectId;
-    projectId?: Schema.Types.ObjectId;
-    eventId?: Schema.Types.ObjectId;
-    userId: Schema.Types.ObjectId;
+    taskId?: Types.ObjectId;
+    projectId?: Types.ObjectId;
+    eventId?: Types.ObjectId;
+    userId: Types.ObjectId;
+    title: string;
+    description: string;
     textContent: string;
     codeBlocks: Array<{
         language: string;
@@ -26,6 +28,8 @@ const NoteSchema: Schema = new Schema({
     projectId: { type: Schema.Types.ObjectId, ref: 'Project' },
     eventId: { type: Schema.Types.ObjectId, ref: 'Event' }, // Assuming Event model exists or will exist
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    title: { type: String, default: 'Untitled Note' },
+    description: { type: String, default: '' },
     textContent: { type: String, default: '' },
     codeBlocks: { type: [CodeBlockSchema], default: [] },
     drawingData: { type: String, default: '' },
