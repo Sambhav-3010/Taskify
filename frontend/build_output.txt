@@ -1,0 +1,74 @@
+
+> frontend@0.1.0 build
+> next build
+
+   Γû▓ Next.js 15.5.9
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully in 14.8s
+   Linting and checking validity of types ...
+
+./src/app/notes/page.tsx
+12:22  Warning: 'Trash2' is defined but never used.  @typescript-eslint/no-unused-vars
+14:5  Warning: 'Dialog' is defined but never used.  @typescript-eslint/no-unused-vars
+15:5  Warning: 'DialogContent' is defined but never used.  @typescript-eslint/no-unused-vars
+16:5  Warning: 'DialogHeader' is defined but never used.  @typescript-eslint/no-unused-vars
+17:5  Warning: 'DialogTitle' is defined but never used.  @typescript-eslint/no-unused-vars
+18:5  Warning: 'DialogDescription' is defined but never used.  @typescript-eslint/no-unused-vars
+19:5  Warning: 'DialogFooter' is defined but never used.  @typescript-eslint/no-unused-vars
+39:13  Warning: 'user' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+41:35  Warning: 'refetch' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/tasks/page.tsx
+3:10  Warning: 'useEffect' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/Navbar.tsx
+11:17  Warning: 'setUser' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/notes/DrawingCanvas.tsx
+12:5  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+21:5  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+
+./src/components/notes/editors/ExcalidrawEditor.tsx
+21:53  Warning: 'state' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/notes/NotePreviewModal.tsx
+10:32  Warning: 'FileText' is defined but never used.  @typescript-eslint/no-unused-vars
+10:42  Warning: 'Code' is defined but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/15) ...
+   Generating static pages (3/15) 
+   Generating static pages (7/15) 
+   Generating static pages (11/15) 
+ Γ£ô Generating static pages (15/15)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+Γöî Γùï /                                    4.86 kB         150 kB
+Γö£ Γùï /_not-found                            999 B         104 kB
+Γö£ Γùï /auth/login                          1.45 kB         155 kB
+Γö£ Γùï /auth/signup                         1.67 kB         155 kB
+Γö£ Γùï /calendar                            6.71 kB         179 kB
+Γö£ Γùï /dashboard                           6.95 kB         159 kB
+Γö£ Γùï /notes                               6.52 kB         169 kB
+Γö£ Γùï /notes/new                             35 kB         201 kB
+Γö£ Γùï /profile                              6.8 kB         149 kB
+Γö£ Γùï /projects                            3.67 kB         173 kB
+Γö£ ╞Æ /projects/edit/[id]                  5.19 kB         160 kB
+Γö£ Γùï /projects/new                        5.11 kB         160 kB
+Γö£ Γùï /tasks                               5.29 kB         181 kB
+Γö£ ╞Æ /tasks/edit/[id]                     6.29 kB         175 kB
+Γöö Γùï /tasks/new                           3.65 kB         161 kB
++ First Load JS shared by all             103 kB
+  Γö£ chunks/493-179b1202ba8c2b90.js       45.6 kB
+  Γö£ chunks/4bd1b696-409494caf8c83275.js  54.2 kB
+  Γöö other shared chunks (total)          2.67 kB
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+
